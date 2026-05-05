@@ -99,6 +99,9 @@ const Sidebar = () => {
                         <Link to="/nurse/triage" className={`flex items-center gap-3 p-3 rounded hover:bg-green-700 transition ${isActive('/nurse/triage')}`}>
                             <FaUserMd /> Triage / Vitals
                         </Link>
+                        <Link to="/nurse/inpatients" className={`flex items-center gap-3 p-3 rounded hover:bg-green-700 transition ${isActive('/nurse/inpatients')}`}>
+                            <FaBed /> Inpatient Management
+                        </Link>
                         <Link to="/nurse/services" className={`flex items-center gap-3 p-3 rounded hover:bg-green-700 transition ${isActive('/nurse/services')}`}>
                             <FaHeart /> Manage Nurse Services
                         </Link>
@@ -166,6 +169,9 @@ const Sidebar = () => {
                                 </Link>
                             </>
                         )}
+                        <Link to="/admin/drug-metadata" className={`flex items-center gap-3 p-3 rounded hover:bg-green-700 transition ${isActive('/admin/drug-metadata')}`}>
+                            <FaPills /> Drug Metadata
+                        </Link>
                     </>
                 )}
 
