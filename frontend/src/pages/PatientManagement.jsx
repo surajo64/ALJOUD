@@ -10,6 +10,7 @@ import * as XLSX from 'xlsx';
 import { saveAs } from 'file-saver';
 import LoadingOverlay from '../components/loadingOverlay';
 import RegisterPatientModal from '../components/RegisterPatientModal';
+import { formatAge } from '../utils/patientUtils';
 
 const PatientManagement = () => {
     const [loading, setLoading] = useState(false);
@@ -48,6 +49,7 @@ const PatientManagement = () => {
     const [selectedWard, setSelectedWard] = useState('');
     const [selectedBed, setSelectedBed] = useState('');
     const [pendingEncounterPatient, setPendingEncounterPatient] = useState(null);
+    const [isANC, setIsANC] = useState(false);
 
     // Watch for pending encounter patient and register modal closing
     useEffect(() => {
@@ -87,6 +89,46 @@ const PatientManagement = () => {
     useEffect(() => {
         filterPatients();
     }, [searchTerm, startDate, endDate, patients, filterProvider, filterHMO]);
+
+    const calculateAge = (dob) => {
+        if (!dob) return '';
+        const today = new Date();
+        const birthDate = new Date(dob);
+        let years = today.getFullYear() - birthDate.getFullYear();
+        let months = today.getMonth() - birthDate.getMonth();
+
+        if (months < 0 || (months === 0 && today.getDate() < birthDate.getDate())) {
+            years--;
+            months += 12;
+        }
+
+        if (years > 0) {
+            return years.toString();
+        } else {
+            return months > 0 ? `0.${months}` : '0';
+        }
+    };
+
+    const calculateDOBFromAge = (age) => {
+        if (!age) return '';
+        const today = new Date();
+        const birthYear = today.getFullYear() - parseInt(age);
+        const dob = new Date(birthYear, today.getMonth(), today.getDate());
+        return dob.toISOString().split('T')[0];
+    };
+
+    const handleEditChange = (e) => {
+        const { name, value, type, checked } = e.target;
+        if (name === 'dateOfBirth') {
+            const age = calculateAge(value);
+            setEditPatient({ ...editPatient, dateOfBirth: value, age: age });
+        } else if (name === 'age') {
+            const dob = calculateDOBFromAge(value);
+            setEditPatient({ ...editPatient, age: value, dateOfBirth: dob });
+        } else {
+            setEditPatient({ ...editPatient, [name]: type === 'checkbox' ? checked : value });
+        }
+    };
 
     const fetchPatients = async () => {
         try {
@@ -164,6 +206,7 @@ const PatientManagement = () => {
         setSelectedCharges([]);
         setSelectedWard('');
         setSelectedBed('');
+        setIsANC(false);
     };
 
     const handleChargeToggle = (chargeId) => {
@@ -174,8 +217,8 @@ const PatientManagement = () => {
 
     const handleCreateEncounter = async () => {
         if (!encounterPatient) return;
-        if (!['External Investigation', 'External Pharmacy', 'External Lab/Radiology', 'Inpatient'].includes(encounterType) && selectedCharges.length === 0) {
-            toast.error('Please select at least one charge');
+        if (!isANC && !['External Investigation', 'External Pharmacy', 'External Lab/Radiology', 'Inpatient'].includes(encounterType) && selectedCharges.length === 0) {
+            toast.error('Please select at least one charge, or check ANC to skip charges');
             return;
         }
         try {
@@ -191,7 +234,8 @@ const PatientManagement = () => {
                 reasonForVisit,
                 encounterStatus: 'registered',
                 ward: encounterType === 'Inpatient' ? selectedWard : undefined,
-                bed: encounterType === 'Inpatient' ? selectedBed : undefined
+                bed: encounterType === 'Inpatient' ? selectedBed : undefined,
+                isANC: isANC
             };
             const visitResponse = await axios.post(`${backendUrl}/api/visits`, visitData, config);
             for (const chargeId of selectedCharges) {
@@ -206,7 +250,7 @@ const PatientManagement = () => {
             const total = charges.filter(c => selectedCharges.includes(c._id)).reduce((s, c) => s + c.basePrice, 0);
             if (!['External Investigation', 'External Pharmacy', 'External Lab/Radiology', 'Inpatient'].includes(encounterType)) {
                 await axios.put(`${backendUrl}/api/visits/${visitResponse.data._id}`,
-                    { encounterStatus: total > 0 ? 'payment_pending' : 'in_nursing' }, config);
+                    { encounterStatus: isANC ? 'in_nursing' : (total > 0 ? 'payment_pending' : 'in_nursing'), isANC: isANC || undefined }, config);
             }
             toast.success('Encounter created successfully!');
             closeEncounterModal();
@@ -533,7 +577,7 @@ const PatientManagement = () => {
                                         <td className="p-4 font-semibold text-blue-600">{patient.mrn || 'N/A'}</td>
                                         <td className="p-4 font-semibold">{patient.name}</td>
                                         <td className="p-4">
-                                            {patient.age || 'N/A'} / {patient.gender || 'N/A'}
+                                            {formatAge(patient.age)} / {patient.gender || 'N/A'}
                                         </td>
                                         <td className="p-4 text-gray-600">{patient.contact || 'N/A'}</td>
                                         <td className="p-4">
@@ -872,8 +916,9 @@ const PatientManagement = () => {
                                     <input
                                         type="text"
                                         className="w-full border p-2 rounded"
+                                        name="name"
                                         value={editPatient.name}
-                                        onChange={(e) => setEditPatient({ ...editPatient, name: e.target.value })}
+                                        onChange={handleEditChange}
                                         required
                                     />
                                 </div>
@@ -888,20 +933,43 @@ const PatientManagement = () => {
                                     />
                                 </div>
                                 <div>
-                                    <label className="block text-sm font-semibold mb-1">Age</label>
+                                    <label className="block text-sm font-semibold mb-1">Date of Birth</label>
+                                    <input
+                                        type="date"
+                                        name="dateOfBirth"
+                                        className="w-full border p-2 rounded focus:ring-2 focus:ring-green-500"
+                                        value={editPatient.dateOfBirth ? new Date(editPatient.dateOfBirth).toISOString().split('T')[0] : ''}
+                                        onChange={handleEditChange}
+                                        max={new Date().toISOString().split('T')[0]}
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-semibold mb-1">
+                                        Age *
+                                        {editPatient.age && (
+                                            <span className="ml-2 text-[10px] text-blue-600 italic">
+                                                {formatAge(editPatient.age)}
+                                            </span>
+                                        )}
+                                    </label>
                                     <input
                                         type="number"
-                                        className="w-full border p-2 rounded"
+                                        name="age"
+                                        className="w-full border p-2 rounded focus:ring-2 focus:ring-green-500"
                                         value={editPatient.age || ''}
-                                        onChange={(e) => setEditPatient({ ...editPatient, age: e.target.value })}
+                                        onChange={handleEditChange}
+                                        required
+                                        min="0"
+                                        step="0.01"
                                     />
                                 </div>
                                 <div>
                                     <label className="block text-sm font-semibold mb-1">Gender</label>
                                     <select
                                         className="w-full border p-2 rounded"
+                                        name="gender"
                                         value={editPatient.gender || ''}
-                                        onChange={(e) => setEditPatient({ ...editPatient, gender: e.target.value })}
+                                        onChange={handleEditChange}
                                     >
                                         <option value="">Select</option>
                                         <option value="male">Male</option>
@@ -913,9 +981,10 @@ const PatientManagement = () => {
                                     <label className="block text-sm font-semibold mb-1">Phone</label>
                                     <input
                                         type="text"
+                                        name="contact"
                                         className="w-full border p-2 rounded"
                                         value={editPatient.contact || ''}
-                                        onChange={(e) => setEditPatient({ ...editPatient, contact: e.target.value })}
+                                        onChange={handleEditChange}
                                     />
                                 </div>
                             </div>
@@ -924,8 +993,9 @@ const PatientManagement = () => {
                                 <textarea
                                     className="w-full border p-2 rounded"
                                     rows="2"
+                                    name="address"
                                     value={editPatient.address || ''}
-                                    onChange={(e) => setEditPatient({ ...editPatient, address: e.target.value })}
+                                    onChange={handleEditChange}
                                 />
                             </div>
 
@@ -937,8 +1007,9 @@ const PatientManagement = () => {
                                         <label className="block text-sm font-semibold mb-1">Provider</label>
                                         <select
                                             className="w-full border p-2 rounded"
+                                            name="provider"
                                             value={editPatient.provider || 'Standard'}
-                                            onChange={(e) => setEditPatient({ ...editPatient, provider: e.target.value })}
+                                            onChange={handleEditChange}
                                         >
                                             <option value="Standard">Standard</option>
                                             <option value="Retainership">Retainership</option>
@@ -955,8 +1026,9 @@ const PatientManagement = () => {
                                             </label>
                                             <select
                                                 className="w-full border p-2 rounded"
+                                                name="hmo"
                                                 value={editPatient.hmo || ''}
-                                                onChange={(e) => setEditPatient({ ...editPatient, hmo: e.target.value })}
+                                                onChange={handleEditChange}
                                                 required={editPatient.provider === 'Retainership' || editPatient.provider === 'NHIA' || editPatient.provider === 'KSCHMA'}
                                             >
                                                 <option value="">Select HMO *</option>
@@ -987,8 +1059,9 @@ const PatientManagement = () => {
                                             <input
                                                 type="text"
                                                 className="w-full border p-2 rounded"
+                                                name="insuranceNumber"
                                                 value={editPatient.insuranceNumber || ''}
-                                                onChange={(e) => setEditPatient({ ...editPatient, insuranceNumber: e.target.value })}
+                                                onChange={handleEditChange}
                                                 required
                                             />
                                         </div>
@@ -1005,8 +1078,9 @@ const PatientManagement = () => {
                                         <input
                                             type="text"
                                             className="w-full border p-2 rounded"
+                                            name="emergencyContactName"
                                             value={editPatient.emergencyContactName || ''}
-                                            onChange={(e) => setEditPatient({ ...editPatient, emergencyContactName: e.target.value })}
+                                            onChange={handleEditChange}
                                         />
                                     </div>
                                     <div>
@@ -1014,8 +1088,9 @@ const PatientManagement = () => {
                                         <input
                                             type="text"
                                             className="w-full border p-2 rounded"
+                                            name="emergencyContactPhone"
                                             value={editPatient.emergencyContactPhone || ''}
-                                            onChange={(e) => setEditPatient({ ...editPatient, emergencyContactPhone: e.target.value })}
+                                            onChange={handleEditChange}
                                         />
                                     </div>
                                 </div>
@@ -1084,7 +1159,7 @@ const PatientManagement = () => {
                                     </div>
                                     <div>
                                         <p className="text-sm text-gray-600">Age</p>
-                                        <p className="font-semibold">{encounterPatient.age} years</p>
+                                        <p className="font-semibold">{formatAge(encounterPatient.age)}</p>
                                     </div>
                                     <div>
                                         <p className="text-sm text-gray-600">Gender</p>
@@ -1142,6 +1217,27 @@ const PatientManagement = () => {
                                 />
                             </div>
 
+                            {/* ANC Checkbox */}
+                            <div className="mb-6">
+                                <label className={`flex items-center gap-3 p-4 rounded-lg border-2 cursor-pointer transition-all ${
+                                    isANC ? 'bg-pink-50 border-pink-400' : 'bg-gray-50 border-gray-200 hover:border-pink-300'
+                                }`}>
+                                    <input
+                                        type="checkbox"
+                                        checked={isANC}
+                                        onChange={(e) => {
+                                            setIsANC(e.target.checked);
+                                            if (e.target.checked) setSelectedCharges([]);
+                                        }}
+                                        className="w-5 h-5 accent-pink-600"
+                                    />
+                                    <div>
+                                        <p className="font-bold text-pink-700 text-sm">🤰 Antenatal Care (ANC) Visit</p>
+                                        <p className="text-xs text-pink-500 mt-0.5">Check for ANC patients — no charges now. Uncheck when doctor consultation charges are needed.</p>
+                                    </div>
+                                </label>
+                            </div>
+
                             {/* Inpatient Ward/Bed */}
                             {encounterType === 'Inpatient' && (
                                 <div className="bg-blue-50 p-4 rounded mb-6 border border-blue-200">
@@ -1185,7 +1281,7 @@ const PatientManagement = () => {
                             )}
 
                             {/* Charges */}
-                            {!['External Investigation', 'External Pharmacy', 'External Lab/Radiology', 'Inpatient'].includes(encounterType) && (
+                            {!isANC && !['External Investigation', 'External Pharmacy', 'External Lab/Radiology', 'Inpatient'].includes(encounterType) && (
                                 <div className="mb-6">
                                     <label className="block text-gray-700 font-semibold mb-2">
                                         Consultation Charges <span className="text-red-500">*</span>
@@ -1221,10 +1317,10 @@ const PatientManagement = () => {
                             <div className="flex gap-3 pt-4 border-t">
                                 <button
                                     onClick={handleCreateEncounter}
-                                    disabled={loading || (!['External Investigation', 'External Pharmacy', 'External Lab/Radiology', 'Inpatient'].includes(encounterType) && selectedCharges.length === 0)}
+                                    disabled={loading || (!isANC && !['External Investigation', 'External Pharmacy', 'External Lab/Radiology', 'Inpatient'].includes(encounterType) && selectedCharges.length === 0)}
                                     className="flex-1 bg-blue-600 text-white py-2 rounded hover:bg-blue-700 disabled:bg-gray-400 flex items-center justify-center gap-2"
                                 >
-                                    <FaCalendarCheck /> {loading ? 'Creating...' : 'Create Encounter'}
+                                    <FaCalendarCheck /> {loading ? 'Creating...' : (isANC ? '🤰 Create ANC Encounter' : 'Create Encounter')}
                                 </button>
                                 <button
                                     onClick={closeEncounterModal}

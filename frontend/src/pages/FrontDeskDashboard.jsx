@@ -6,6 +6,7 @@ import Layout from '../components/Layout';
 import { FaUserPlus, FaCalendarCheck, FaDollarSign, FaSearch, FaFileAlt, FaPlus, FaTimes, FaClock, FaCalendarAlt, FaBed } from 'react-icons/fa';
 import { toast } from 'react-toastify';
 import LoadingOverlay from '../components/loadingOverlay';
+import { formatAge } from '../utils/patientUtils';
 
 const FrontDeskDashboard = () => {
     const [loading, setLoading] = useState(false);
@@ -25,6 +26,7 @@ const FrontDeskDashboard = () => {
     const [selectedClinic, setSelectedClinic] = useState('');
     const [encounterType, setEncounterType] = useState('Outpatient');
     const [reasonForVisit, setReasonForVisit] = useState('');
+    const [isANC, setIsANC] = useState(false);
 
     const [selectedWard, setSelectedWard] = useState('');
     const [selectedBed, setSelectedBed] = useState('');
@@ -52,6 +54,7 @@ const FrontDeskDashboard = () => {
     const [newPatient, setNewPatient] = useState({
         name: '',
         age: '',
+        dateOfBirth: '',
         gender: 'male',
         contact: '',
         address: '',
@@ -69,6 +72,46 @@ const FrontDeskDashboard = () => {
         fetchClinics();
         fetchWards();
     }, []);
+
+    const calculateAge = (dob) => {
+        if (!dob) return '';
+        const today = new Date();
+        const birthDate = new Date(dob);
+        let years = today.getFullYear() - birthDate.getFullYear();
+        let months = today.getMonth() - birthDate.getMonth();
+
+        if (months < 0 || (months === 0 && today.getDate() < birthDate.getDate())) {
+            years--;
+            months += 12;
+        }
+
+        if (years > 0) {
+            return years.toString();
+        } else {
+            return months > 0 ? `0.${months}` : '0';
+        }
+    };
+
+    const calculateDOBFromAge = (age) => {
+        if (!age) return '';
+        const today = new Date();
+        const birthYear = today.getFullYear() - parseInt(age);
+        const dob = new Date(birthYear, today.getMonth(), today.getDate());
+        return dob.toISOString().split('T')[0];
+    };
+
+    const handleNewPatientChange = (e) => {
+        const { name, value } = e.target;
+        if (name === 'dateOfBirth') {
+            const age = calculateAge(value);
+            setNewPatient({ ...newPatient, dateOfBirth: value, age: age });
+        } else if (name === 'age') {
+            const dob = calculateDOBFromAge(value);
+            setNewPatient({ ...newPatient, age: value, dateOfBirth: dob });
+        } else {
+            setNewPatient({ ...newPatient, [name]: value });
+        }
+    };
 
     const fetchWards = async () => {
         try {
@@ -244,6 +287,7 @@ const FrontDeskDashboard = () => {
         setSelectedCharges([]);
         setSelectedClinic('');
         setEncounterType('Outpatient');
+        setIsANC(false);
         setShowEncounterModal(true);
     };
 
@@ -256,6 +300,7 @@ const FrontDeskDashboard = () => {
         setReasonForVisit('');
         setSelectedWard('');
         setSelectedBed('');
+        setIsANC(false);
     };
 
     const handleChargeToggle = (chargeId) => {
@@ -274,8 +319,8 @@ const FrontDeskDashboard = () => {
             return;
         }
 
-        if (!['External Investigation', 'External Pharmacy', 'External Lab/Radiology', 'Inpatient'].includes(encounterType) && selectedCharges.length === 0) {
-            toast.error('Please select at least one charge');
+        if (!isANC && !['External Investigation', 'External Pharmacy', 'External Lab/Radiology', 'Inpatient'].includes(encounterType) && selectedCharges.length === 0) {
+            toast.error('Please select at least one charge, or check the ANC checkbox to skip charges');
             return;
         }
 
@@ -294,7 +339,8 @@ const FrontDeskDashboard = () => {
                 reasonForVisit: reasonForVisit,
                 encounterStatus: 'registered',
                 ward: encounterType === 'Inpatient' ? selectedWard : undefined,
-                bed: encounterType === 'Inpatient' ? selectedBed : undefined
+                bed: encounterType === 'Inpatient' ? selectedBed : undefined,
+                isANC: isANC
             };
             const visitResponse = await axios.post(`${backendUrl}/api/visits`, visitData, config);
 
@@ -315,10 +361,10 @@ const FrontDeskDashboard = () => {
             const totalAmount = selectedChargeObjects.reduce((sum, c) => sum + c.basePrice, 0);
 
             if (!['External Investigation', 'External Pharmacy', 'External Lab/Radiology', 'Inpatient'].includes(encounterType)) {
-                const newStatus = totalAmount > 0 ? 'payment_pending' : 'in_nursing';
+                const newStatus = isANC ? 'in_nursing' : (totalAmount > 0 ? 'payment_pending' : 'in_nursing');
                 await axios.put(
                     `${backendUrl}/api/visits/${visitResponse.data._id}`,
-                    { encounterStatus: newStatus },
+                    { encounterStatus: newStatus, isANC: isANC || undefined },
                     config
                 );
             }
@@ -574,22 +620,48 @@ const FrontDeskDashboard = () => {
                             type="text"
                             placeholder="Full Name *"
                             className="border p-2 rounded"
+                            name="name"
                             value={newPatient.name}
-                            onChange={(e) => setNewPatient({ ...newPatient, name: e.target.value })}
+                            onChange={handleNewPatientChange}
                             required
                         />
-                        <input
-                            type="number"
-                            placeholder="Age *"
-                            className="border p-2 rounded"
-                            value={newPatient.age}
-                            onChange={(e) => setNewPatient({ ...newPatient, age: e.target.value })}
-                            required
-                        />
+                        <div className="flex gap-2">
+                            <div className="flex-1">
+                                <label className="block text-[10px] text-gray-500 uppercase font-bold pl-1">Date of Birth</label>
+                                <input
+                                    type="date"
+                                    name="dateOfBirth"
+                                    className="w-full border p-2 rounded text-sm"
+                                    value={newPatient.dateOfBirth}
+                                    onChange={handleNewPatientChange}
+                                    max={new Date().toISOString().split('T')[0]}
+                                />
+                            </div>
+                            <div className="flex-1">
+                                <label className="block text-[10px] text-gray-500 uppercase font-bold pl-1">Age *</label>
+                                <input
+                                    type="number"
+                                    name="age"
+                                    placeholder="Age *"
+                                    className="w-full border p-2 rounded text-sm"
+                                    value={newPatient.age}
+                                    onChange={handleNewPatientChange}
+                                    required
+                                    min="0"
+                                    step="0.01"
+                                />
+                                {newPatient.age && (
+                                    <span className="text-[10px] text-blue-600 italic pl-1">
+                                        {formatAge(newPatient.age)}
+                                    </span>
+                                )}
+                            </div>
+                        </div>
                         <select
                             className="border p-2 rounded"
+                            name="gender"
                             value={newPatient.gender}
-                            onChange={(e) => setNewPatient({ ...newPatient, gender: e.target.value })}
+                            onChange={handleNewPatientChange}
                         >
                             <option value="male">Male</option>
                             <option value="female">Female</option>
@@ -597,23 +669,26 @@ const FrontDeskDashboard = () => {
                         </select>
                         <input
                             type="text"
+                            name="contact"
                             placeholder="Contact Number *"
                             className="border p-2 rounded"
                             value={newPatient.contact}
-                            onChange={(e) => setNewPatient({ ...newPatient, contact: e.target.value })}
+                            onChange={handleNewPatientChange}
                             required
                         />
                         <input
                             type="text"
+                            name="address"
                             placeholder="Address"
                             className="border p-2 rounded md:col-span-2"
                             value={newPatient.address}
-                            onChange={(e) => setNewPatient({ ...newPatient, address: e.target.value })}
+                            onChange={handleNewPatientChange}
                         />
                         <select
                             className="border p-2 rounded"
+                            name="provider"
                             value={newPatient.provider}
-                            onChange={(e) => setNewPatient({ ...newPatient, provider: e.target.value })}
+                            onChange={handleNewPatientChange}
                         >
                             <option value="Standard">Standard</option>
                             <option value="Retainership">Retainership</option>
@@ -623,33 +698,37 @@ const FrontDeskDashboard = () => {
                         {newPatient.provider === 'NHIA' && (
                             <input
                                 type="text"
+                                name="hmo"
                                 placeholder="HMO *"
                                 className="border p-2 rounded"
                                 value={newPatient.hmo}
-                                onChange={(e) => setNewPatient({ ...newPatient, hmo: e.target.value })}
+                                onChange={handleNewPatientChange}
                                 required
                             />
                         )}
                         <input
                             type="text"
+                            name="insuranceNumber"
                             placeholder="Insurance Number (Optional)"
                             className="border p-2 rounded"
                             value={newPatient.insuranceNumber}
-                            onChange={(e) => setNewPatient({ ...newPatient, insuranceNumber: e.target.value })}
+                            onChange={handleNewPatientChange}
                         />
                         <input
                             type="text"
+                            name="emergencyContactName"
                             placeholder="Emergency Contact Name"
                             className="border p-2 rounded"
                             value={newPatient.emergencyContactName}
-                            onChange={(e) => setNewPatient({ ...newPatient, emergencyContactName: e.target.value })}
+                            onChange={handleNewPatientChange}
                         />
                         <input
                             type="text"
+                            name="emergencyContactPhone"
                             placeholder="Emergency Contact Phone"
                             className="border p-2 rounded"
                             value={newPatient.emergencyContactPhone}
-                            onChange={(e) => setNewPatient({ ...newPatient, emergencyContactPhone: e.target.value })}
+                            onChange={handleNewPatientChange}
                         />
                         <button className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 md:col-span-2">
                             Register Patient
@@ -687,7 +766,7 @@ const FrontDeskDashboard = () => {
                                     <div>
                                         <p className="font-semibold">{patient.name}</p>
                                         <p className="text-sm text-gray-600">
-                                            MRN: {patient.mrn} | Age: {patient.age} | {patient.gender}
+                                            MRN: {patient.mrn} | Age: {formatAge(patient.age)} | {patient.gender}
                                         </p>
                                         {hasTodayEncounter && (
                                             <p className="text-xs text-orange-600 mt-1">
@@ -771,7 +850,7 @@ const FrontDeskDashboard = () => {
                                     <div>
                                         <p className="font-semibold">{patient.name}</p>
                                         <p className="text-sm text-gray-600">
-                                            MRN: {patient.mrn} | Age: {patient.age} | {patient.gender}
+                                            MRN: {patient.mrn} | Age: {formatAge(patient.age)} | {patient.gender}
                                         </p>
                                         {hasTodayEncounter && (
                                             <p className="text-xs text-orange-600 mt-1">
@@ -887,7 +966,7 @@ const FrontDeskDashboard = () => {
                                     </div>
                                     <div>
                                         <p className="text-sm text-gray-600">Age</p>
-                                        <p className="font-semibold">{selectedPatient.age} years</p>
+                                        <p className="font-semibold">{formatAge(selectedPatient.age)}</p>
                                     </div>
                                     <div>
                                         <p className="text-sm text-gray-600">Gender</p>
@@ -949,6 +1028,26 @@ const FrontDeskDashboard = () => {
                                 />
                             </div>
 
+                            {/* ANC Checkbox */}
+                            <div className="mb-6">
+                                <label className={`flex items-center gap-3 p-4 rounded-lg border-2 cursor-pointer transition-all ${isANC ? 'bg-pink-50 border-pink-400' : 'bg-gray-50 border-gray-200 hover:border-pink-300'
+                                    }`}>
+                                    <input
+                                        type="checkbox"
+                                        checked={isANC}
+                                        onChange={(e) => {
+                                            setIsANC(e.target.checked);
+                                            if (e.target.checked) setSelectedCharges([]);
+                                        }}
+                                        className="w-5 h-5 accent-pink-600"
+                                    />
+                                    <div>
+                                        <p className="font-bold text-pink-700 text-sm">🤰 Antenatal Care (ANC) Follow-Up Visit</p>
+                                        <p className="text-xs text-pink-500 mt-0.5">Check for ANC patients — no charges now. Uncheck when doctor consultation charges are needed.</p>
+                                    </div>
+                                </label>
+                            </div>
+
                             {/* Inpatient Ward Selection */}
                             {encounterType === 'Inpatient' && (
                                 <div className="bg-blue-50 p-4 rounded mb-6 border border-blue-200">
@@ -1000,7 +1099,7 @@ const FrontDeskDashboard = () => {
                             )}
 
                             {/* Charges Selection */}
-                            {!['External Investigation', 'External Pharmacy', 'External Lab/Radiology', 'Inpatient'].includes(encounterType) && (
+                            {!isANC && !['External Investigation', 'External Pharmacy', 'External Lab/Radiology', 'Inpatient'].includes(encounterType) && (
                                 <div className="mb-6">
                                     <label className="block text-gray-700 font-semibold mb-2">
                                         Select Charges <span className="text-red-500">*</span>
@@ -1087,9 +1186,9 @@ const FrontDeskDashboard = () => {
                             <button
                                 onClick={handleCreateEncounter}
                                 className="bg-green-600 text-white px-6 py-2 rounded hover:bg-green-700 flex items-center gap-2"
-                                disabled={!['External Investigation', 'External Pharmacy', 'External Lab/Radiology', 'Inpatient'].includes(encounterType) && selectedCharges.length === 0}
+                                disabled={!isANC && !['External Investigation', 'External Pharmacy', 'External Lab/Radiology', 'Inpatient'].includes(encounterType) && selectedCharges.length === 0}
                             >
-                                <FaPlus /> Create Encounter
+                                <FaPlus /> {isANC ? '🤰 Create ANC Encounter' : 'Create Encounter'}
                             </button>
                         </div>
                     </div>
@@ -1229,11 +1328,10 @@ const FrontDeskDashboard = () => {
                                                     return (
                                                         <label
                                                             key={charge._id}
-                                                            className={`flex items-center justify-between p-3 rounded border cursor-pointer transition-colors ${
-                                                                isSelected
+                                                            className={`flex items-center justify-between p-3 rounded border cursor-pointer transition-colors ${isSelected
                                                                     ? 'bg-green-50 border-green-400'
                                                                     : 'bg-white border-gray-200 hover:bg-gray-50'
-                                                            }`}
+                                                                }`}
                                                         >
                                                             <div className="flex items-center gap-3">
                                                                 <input
@@ -1296,11 +1394,10 @@ const FrontDeskDashboard = () => {
                                 <button
                                     onClick={handleSubmitAdditionalCharges}
                                     disabled={selectedAdditionalCharges.length === 0}
-                                    className={`px-6 py-2 rounded text-white font-semibold flex items-center gap-2 ${
-                                        selectedAdditionalCharges.length === 0
+                                    className={`px-6 py-2 rounded text-white font-semibold flex items-center gap-2 ${selectedAdditionalCharges.length === 0
                                             ? 'bg-green-300 cursor-not-allowed'
                                             : 'bg-green-600 hover:bg-green-700'
-                                    }`}
+                                        }`}
                                 >
                                     <FaDollarSign /> Add to Encounter
                                 </button>
@@ -1407,7 +1504,7 @@ const FrontDeskDashboard = () => {
                                                 <FaBed className="text-purple-600" /> Ward Admission Assignment
                                             </h4>
                                             <p className="text-sm text-purple-700 mb-6">Allocate a ward and bed for this patient to complete the admission process.</p>
-                                            
+
                                             <div className="space-y-6 flex-1">
                                                 <div>
                                                     <label className="block text-sm text-gray-700 font-bold mb-2 uppercase tracking-wider">Select Ward</label>
@@ -1476,7 +1573,7 @@ const FrontDeskDashboard = () => {
                                                                     if (selectedPatient.provider === 'Retainership') fee = charge.retainershipFee || fee;
                                                                     else if (selectedPatient.provider === 'NHIA') fee = charge.nhiaFee || fee;
                                                                     else if (selectedPatient.provider === 'KSCHMA') fee = charge.kschmaFee || fee;
-                                                                    
+
                                                                     return (
                                                                         <div
                                                                             key={charge._id}

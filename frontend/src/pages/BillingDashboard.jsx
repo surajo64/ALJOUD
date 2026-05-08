@@ -6,6 +6,7 @@ import Layout from '../components/Layout';
 import { FaDollarSign, FaFileInvoiceDollar, FaCheckCircle, FaUndo, FaWallet, FaPrint, FaSearch, FaUser, FaExclamationTriangle, FaBuilding, FaHistory, FaPlus } from 'react-icons/fa';
 import { toast } from 'react-toastify';
 import LoadingOverlay from '../components/loadingOverlay';
+import { formatAge } from '../utils/patientUtils';
 
 const BillingDashboard = () => {
     const [loading, setLoading] = useState(false);
@@ -23,6 +24,8 @@ const BillingDashboard = () => {
     const [showPatientSearch, setShowPatientSearch] = useState(false);
     const [patientSearchTerm, setPatientSearchTerm] = useState('');
     const [viewingPatient, setViewingPatient] = useState(null);
+    const [showRefundModal, setShowRefundModal] = useState(false);
+    const [refundAmount, setRefundAmount] = useState('');
     const [startDate, setStartDate] = useState(new Date().toISOString().split('T')[0]);
     const [endDate, setEndDate] = useState(new Date().toISOString().split('T')[0]);
     const [depositSearchTerm, setDepositSearchTerm] = useState('');
@@ -37,6 +40,8 @@ const BillingDashboard = () => {
     const [hmoDepositReference, setHmoDepositReference] = useState('');
     const [statementStartDate, setStatementStartDate] = useState('');
     const [statementEndDate, setStatementEndDate] = useState('');
+    const [hmoCurrentPage, setHmoCurrentPage] = useState(1);
+    const hmoItemsPerPage = 10;
 
     const [systemSettings, setSystemSettings] = useState(null);
 
@@ -56,6 +61,7 @@ const BillingDashboard = () => {
         fetchInvoices();
         fetchPatients();
         fetchReceipts();
+        fetchRetainershipHMOs();
     }, []);
 
     const [newInvoice, setNewInvoice] = useState({
@@ -107,8 +113,7 @@ const BillingDashboard = () => {
 
     // --- Retainership Billing Functions ---
 
-    const searchRetainershipHMOs = async () => {
-        if (!retainershipSearchTerm) return;
+    const fetchRetainershipHMOs = async (term = '') => {
         try {
             setLoading(true);
             const config = { headers: { Authorization: `Bearer ${user.token}` } };
@@ -116,19 +121,21 @@ const BillingDashboard = () => {
 
             const filtered = data.filter(h =>
                 h.category === 'Retainership' &&
-                h.name.toLowerCase().includes(retainershipSearchTerm.toLowerCase())
+                (!term || h.name.toLowerCase().includes(term.toLowerCase()))
             );
 
             setRetainershipHMOs(filtered);
-            if (filtered.length === 0) {
-                toast.info('No Retainership HMOs found matching your search');
-            }
         } catch (error) {
             console.error(error);
-            toast.error('Error searching HMOs');
+            toast.error('Error fetching HMOs');
         } finally {
             setLoading(false);
         }
+    };
+
+    const searchRetainershipHMOs = () => {
+        fetchRetainershipHMOs(retainershipSearchTerm);
+        setHmoCurrentPage(1);
     };
 
     const handleSelectHMO = async (hmo) => {
@@ -203,6 +210,49 @@ const BillingDashboard = () => {
         } catch (error) {
             console.error(error);
             toast.error(error.response?.data?.message || 'Error adding deposit');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleRefundDeposit = async (e) => {
+        e.preventDefault();
+        if (!refundAmount || isNaN(refundAmount) || Number(refundAmount) <= 0) {
+            toast.error('Please enter a valid amount');
+            return;
+        }
+
+        if (Number(refundAmount) > (viewingPatient?.depositBalance || 0)) {
+            toast.error('Refund amount cannot exceed available balance');
+            return;
+        }
+
+        try {
+            setLoading(true);
+            const config = { headers: { Authorization: `Bearer ${user.token}` } };
+            await axios.post(`${backendUrl}/api/patients/${selectedPatient}/refund`, {
+                amount: Number(refundAmount)
+            }, config);
+
+            toast.success('Deposit refunded successfully!');
+            setShowRefundModal(false);
+            setRefundAmount('');
+            
+            // Refresh patient data
+            const patientRes = await axios.get(`${backendUrl}/api/patients/${selectedPatient}`, config);
+            const depositRes = await axios.get(`${backendUrl}/api/patients/${selectedPatient}/deposit`, config);
+            
+            setViewingPatient({ 
+                ...patientRes.data, 
+                depositBalance: depositRes.data.balance, 
+                lowDepositThreshold: depositRes.data.threshold 
+            });
+            
+            fetchPatients();
+            fetchReceipts();
+        } catch (error) {
+            console.error(error);
+            toast.error(error.response?.data?.message || 'Error processing refund');
         } finally {
             setLoading(false);
         }
@@ -465,10 +515,12 @@ const BillingDashboard = () => {
                     <div class="header">
                         <div class="hospital-info">
                             ${systemSettings?.hospitalLogo ? `<img src="${systemSettings.hospitalLogo}" alt="Logo" />` : ''}
-                            <h1>SUD GENERAL HOSPITAL</h1>
-                            <div class="address">No 234 Hadejia Road</div>
+                            <h1>${systemSettings?.reportHeader || 'MedKare EMR SYSTEM'}</h1>
+                            <div class="address">${systemSettings?.address || ''}</div>
                             <div class="contact">
-                                Tel: 07035400899 <span class="spacer">|</span> Email: info@sud.com
+                                ${systemSettings?.phone ? `Tel: ${systemSettings.phone}` : ''} 
+                                ${systemSettings?.phone && systemSettings?.email ? '<span class="spacer">|</span>' : ''} 
+                                ${systemSettings?.email ? `Email: ${systemSettings.email}` : ''}
                             </div>
                         </div>
                         
@@ -492,7 +544,7 @@ const BillingDashboard = () => {
                                     <span class="info-value">${patient.mrn}</span>
                                     
                                     <span class="info-label">Gender / Age:</span>
-                                    <span class="info-value" style="text-transform: capitalize;">${patient.gender} / ${patient.age} years</span>
+                                    <span class="info-value" style="text-transform: capitalize;">${patient.gender} / ${formatAge(patient.age)}</span>
                                 </div>
                             </div>
                         </div>
@@ -531,10 +583,12 @@ const BillingDashboard = () => {
                                     <td>${new Date(r.createdAt).toLocaleDateString()}</td>
                                     <td><span style="font-family: monospace; background: #eee; padding: 2px 5px; border-radius: 3px;">${r.receiptNumber}</span></td>
                                     <td>
-                                        ${r.charges?.map(c => c.charge?.name || 'Service').join(', ') || 'Payment on Account'}
+                                        ${r.paymentMethod === 'refund' ? '<span style="color: #e53e3e; font-weight: bold;">Deposit Refund</span>' : (r.charges?.map(c => c.charge?.name || 'Service').join(', ') || 'Payment on Account')}
                                     </td>
                                     <td style="text-transform: capitalize;">${r.paymentMethod}</td>
-                                    <td class="text-right font-bold">₦${r.amountPaid.toLocaleString()}</td>
+                                    <td class="text-right font-bold ${r.amountPaid < 0 ? 'text-red-600' : ''}">
+                                        ${r.amountPaid < 0 ? `-₦${Math.abs(r.amountPaid).toLocaleString()}` : `₦${r.amountPaid.toLocaleString()}`}
+                                    </td>
                                 </tr>
                             `).join('')}
                             ${patientReceipts.length === 0 ? '<tr><td colspan="5" class="text-center" style="padding: 30px; color: #888;">No transaction history found for this patient.</td></tr>' : ''}
@@ -565,7 +619,7 @@ const BillingDashboard = () => {
                     </div>
 
                     <div class="footer">
-                        <p>Thank you for choosing ${systemSettings?.hospitalName || 'SUD EMR Medical Center'}.</p>
+                        <p>Thank you for choosing ${systemSettings?.reportHeader || 'SUD EMR Medical Center'}.</p>
                         <p>For billing inquiries, please contact our accounts department.</p>
                         <p style="margin-top: 10px; font-style: italic;">This is a computer-generated document and does not require a signature.</p>
                     </div>
@@ -739,7 +793,7 @@ const BillingDashboard = () => {
                             onClick={() => setShowPatientSearch(true)}
                             className="bg-purple-600 text-white px-4 py-2 rounded hover:bg-purple-700 flex items-center gap-2"
                         >
-                            <FaSearch /> Search Patient
+                            <FaSearch /> Patient Wallet
                         </button>
                         <button
                             onClick={() => setShowDepositModal(true)}
@@ -870,6 +924,48 @@ const BillingDashboard = () => {
                         </div>
                     )}
 
+                    {/* Refund Modal */}
+                    {showRefundModal && (
+                        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[60]">
+                            <div className="bg-white p-6 rounded-lg shadow-xl w-[400px]">
+                                <h3 className="text-xl font-bold mb-4">Refund Patient Deposit</h3>
+                                <div className="mb-4 p-3 bg-orange-50 border border-orange-200 rounded text-sm text-orange-800">
+                                    Available Balance: <strong>₦{(viewingPatient?.depositBalance || 0).toLocaleString()}</strong>
+                                </div>
+                                <form onSubmit={handleRefundDeposit}>
+                                    <div className="mb-4">
+                                        <label className="block text-sm font-semibold mb-1">Refund Amount (₦)</label>
+                                        <input
+                                            type="number"
+                                            className="w-full border p-2 rounded"
+                                            value={refundAmount}
+                                            onChange={(e) => setRefundAmount(e.target.value)}
+                                            placeholder="Enter amount to refund"
+                                            max={viewingPatient?.depositBalance || 0}
+                                            required
+                                        />
+                                    </div>
+                                    <div className="flex gap-2">
+                                        <button
+                                            type="button"
+                                            onClick={() => setShowRefundModal(false)}
+                                            className="flex-1 bg-gray-300 text-gray-800 px-4 py-2 rounded hover:bg-gray-400"
+                                        >
+                                            Cancel
+                                        </button>
+                                        <button
+                                            type="submit"
+                                            className="flex-1 bg-orange-600 text-white px-4 py-2 rounded hover:bg-orange-700 font-bold"
+                                        >
+                                            Process Refund
+                                        </button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    )}
+
+
                     {/* Patient Search Modal */}
                     {showPatientSearch && (
                         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
@@ -902,7 +998,7 @@ const BillingDashboard = () => {
                                             >
                                                 <p className="font-semibold">{patient.name}</p>
                                                 <p className="text-sm text-gray-600">
-                                                    MRN: {patient.mrn} | Age: {patient.age} | {patient.gender}
+                                                    MRN: {patient.mrn} | Age: {formatAge(patient.age)} | {patient.gender}
                                                 </p>
                                             </div>
                                         ))}
@@ -954,7 +1050,7 @@ const BillingDashboard = () => {
                                         </div>
                                         <div>
                                             <p className="text-sm text-gray-600">Age / Gender</p>
-                                            <p className="font-semibold">{viewingPatient.age} / {viewingPatient.gender}</p>
+                                            <p className="font-semibold">{formatAge(viewingPatient.age)} / {viewingPatient.gender}</p>
                                         </div>
                                         <div>
                                             <p className="text-sm text-gray-600">Contact</p>
@@ -1013,6 +1109,18 @@ const BillingDashboard = () => {
                                         className="flex-1 bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 flex items-center justify-center gap-2"
                                     >
                                         <FaPrint /> Print Statement
+                                    </button>
+                                    <button
+                                        onClick={() => {
+                                            setSelectedPatient(viewingPatient._id);
+                                            setShowRefundModal(true);
+                                            setRefundAmount('');
+                                            // Keep viewingPatient for context in the refund modal
+                                        }}
+                                        disabled={(viewingPatient.depositBalance || 0) <= 0}
+                                        className={`flex-1 px-4 py-2 rounded flex items-center justify-center gap-2 ${ (viewingPatient.depositBalance || 0) <= 0 ? 'bg-gray-300 text-gray-500 cursor-not-allowed' : 'bg-orange-600 text-white hover:bg-orange-700' }`}
+                                    >
+                                        <FaUndo /> Refund
                                     </button>
                                     <button
                                         onClick={() => {
@@ -1158,24 +1266,70 @@ const BillingDashboard = () => {
                         </div>
 
                         {/* HMO Results */}
-                        {retainershipHMOs.length > 0 && !selectedHMO && (
-                            <div className="space-y-2">
-                                <p className="font-semibold text-gray-700">Search Results:</p>
-                                {retainershipHMOs.map(hmo => (
-                                    <div
-                                        key={hmo._id}
-                                        onClick={() => handleSelectHMO(hmo)}
-                                        className="p-3 border rounded hover:bg-gray-50 cursor-pointer flex justify-between items-center"
-                                    >
-                                        <div>
-                                            <p className="font-semibold">{hmo.name}</p>
-                                            <p className="text-sm text-gray-600">Contact: {hmo.contactPerson || 'N/A'}</p>
+                        {!selectedHMO && (
+                            <div className="space-y-4">
+                                <div className="flex justify-between items-center mb-2">
+                                    <p className="font-semibold text-gray-700">
+                                        {retainershipSearchTerm ? `Search Results (${retainershipHMOs.length}):` : `All Retainership HMOs (${retainershipHMOs.length}):`}
+                                    </p>
+                                </div>
+
+                                {retainershipHMOs.length === 0 ? (
+                                    <p className="text-gray-500 text-center py-4 italic">No retainership entities found.</p>
+                                ) : (
+                                    <>
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                            {retainershipHMOs
+                                                .slice((hmoCurrentPage - 1) * hmoItemsPerPage, hmoCurrentPage * hmoItemsPerPage)
+                                                .map(hmo => (
+                                                    <div
+                                                        key={hmo._id}
+                                                        onClick={() => handleSelectHMO(hmo)}
+                                                        className="p-4 border rounded-xl hover:bg-blue-50 hover:border-blue-200 cursor-pointer flex justify-between items-center transition-all shadow-sm bg-white group"
+                                                    >
+                                                        <div>
+                                                            <p className="font-bold text-gray-800 group-hover:text-blue-700">{hmo.name}</p>
+                                                            <p className="text-xs text-gray-500 mt-1">Contact: {hmo.contactPerson || 'N/A'}</p>
+                                                        </div>
+                                                        <div className="text-right">
+                                                            <span className="bg-purple-100 text-purple-800 text-[10px] font-black uppercase px-2 py-1 rounded">
+                                                                {hmo.category}
+                                                            </span>
+                                                            <p className="text-[10px] text-gray-400 mt-1 font-mono">{hmo.code}</p>
+                                                        </div>
+                                                    </div>
+                                                ))}
                                         </div>
-                                        <span className="bg-purple-100 text-purple-800 text-xs font-semibold px-2 py-1 rounded">
-                                            {hmo.category}
-                                        </span>
-                                    </div>
-                                ))}
+
+                                        {/* Pagination Controls */}
+                                        {retainershipHMOs.length > hmoItemsPerPage && (
+                                            <div className="flex items-center justify-between border-t border-gray-100 pt-4 mt-4">
+                                                <p className="text-xs text-gray-500">
+                                                    Showing {(hmoCurrentPage - 1) * hmoItemsPerPage + 1} to {Math.min(hmoCurrentPage * hmoItemsPerPage, retainershipHMOs.length)} of {retainershipHMOs.length}
+                                                </p>
+                                                <div className="flex gap-2">
+                                                    <button
+                                                        onClick={() => setHmoCurrentPage(p => Math.max(1, p - 1))}
+                                                        disabled={hmoCurrentPage === 1}
+                                                        className="px-3 py-1 border rounded text-xs disabled:opacity-50 hover:bg-gray-50"
+                                                    >
+                                                        Previous
+                                                    </button>
+                                                    <span className="text-xs flex items-center px-2 font-bold text-gray-600">
+                                                        Page {hmoCurrentPage} of {Math.ceil(retainershipHMOs.length / hmoItemsPerPage)}
+                                                    </span>
+                                                    <button
+                                                        onClick={() => setHmoCurrentPage(p => Math.min(Math.ceil(retainershipHMOs.length / hmoItemsPerPage), p + 1))}
+                                                        disabled={hmoCurrentPage === Math.ceil(retainershipHMOs.length / hmoItemsPerPage)}
+                                                        className="px-3 py-1 border rounded text-xs disabled:opacity-50 hover:bg-gray-50"
+                                                    >
+                                                        Next
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        )}
+                                    </>
+                                )}
                             </div>
                         )}
                     </div>

@@ -1,15 +1,17 @@
 import { useState, useEffect, useContext } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import AuthContext from '../context/AuthContext';
 import { AppContext } from '../context/AppContext';
 import Layout from '../components/Layout';
-import { FaUserMd, FaSearch, FaCheckCircle, FaNotesMedical, FaHeartbeat, FaMoneyBillWave, FaTrash, FaEdit, FaPlus, FaTable, FaClock, FaChevronDown, FaChevronRight } from 'react-icons/fa';
+import { FaUserMd, FaSearch, FaCheckCircle, FaNotesMedical, FaHeartbeat, FaMoneyBillWave, FaTrash, FaEdit, FaPlus, FaTable, FaClock, FaChevronDown, FaChevronRight, FaHistory } from 'react-icons/fa';
 import { toast } from 'react-toastify';
 import LoadingOverlay from '../components/loadingOverlay';
+import { formatAge } from '../utils/patientUtils';
 
 const NurseTriage = () => {
     const { patientId, encounterId } = useParams();
+    const navigate = useNavigate();
     const [loading, setLoading] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
     const [patients, setPatients] = useState([]);
@@ -111,17 +113,18 @@ const NurseTriage = () => {
             setSelectedPatient(patient);
             
             // Fetch patient's encounters
-            const { data: allVisits } = await axios.get(`${backendUrl}/api/visits`, config);
-            const patientEncounters = allVisits.filter(v =>
-                (v.patient._id === pId || v.patient === pId) &&
-                (v.encounterStatus === 'payment_pending' || v.encounterStatus === 'in_nursing' || v.encounterStatus === 'registered' || v.encounterStatus === 'with_doctor' ||
-                    v.encounterStatus === 'completed' || v.encounterStatus === 'cancelled' || v.encounterStatus === 'discharged' || v.encounterStatus === 'in_ward' || v.encounterStatus === 'admitted')
+            const { data: patientEncounters } = await axios.get(`${backendUrl}/api/visits?patient=${pId}`, config);
+            
+            // Filter by relevant statuses if needed (optional, but keep consistent with previous logic if it was filtering)
+            const filteredEncounters = patientEncounters.filter(v =>
+                v.encounterStatus === 'payment_pending' || v.encounterStatus === 'in_nursing' || v.encounterStatus === 'registered' || v.encounterStatus === 'with_doctor' ||
+                    v.encounterStatus === 'completed' || v.encounterStatus === 'cancelled' || v.encounterStatus === 'discharged' || v.encounterStatus === 'in_ward' || v.encounterStatus === 'admitted'
             );
-            patientEncounters.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-            setEncounters(patientEncounters);
+            filteredEncounters.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+            setEncounters(filteredEncounters);
             
             if (eId) {
-                const targetEncounter = patientEncounters.find(e => e._id === eId);
+                const targetEncounter = filteredEncounters.find(e => e._id === eId);
                 if (targetEncounter) {
                     handleSelectEncounter(targetEncounter);
                 }
@@ -249,15 +252,15 @@ const NurseTriage = () => {
             if (!user) return;
             setLoading(true);
             const config = { headers: { Authorization: `Bearer ${user.token}` } };
-            const { data } = await axios.get(`${backendUrl}/api/visits`, config);
-            const patientEncounters = data.filter(v =>
-                (v.patient._id === patient._id || v.patient === patient._id) &&
-                (v.encounterStatus === 'payment_pending' || v.encounterStatus === 'in_nursing' || v.encounterStatus === 'registered' || v.encounterStatus === 'with_doctor' ||
-                    v.encounterStatus === 'completed' || v.encounterStatus === 'cancelled' || v.encounterStatus === 'discharged' || v.encounterStatus === 'in_ward' || v.encounterStatus === 'admitted')
+            const { data: patientEncounters } = await axios.get(`${backendUrl}/api/visits?patient=${patient._id}`, config);
+            
+            const filteredEncounters = patientEncounters.filter(v =>
+                v.encounterStatus === 'payment_pending' || v.encounterStatus === 'in_nursing' || v.encounterStatus === 'registered' || v.encounterStatus === 'with_doctor' ||
+                    v.encounterStatus === 'completed' || v.encounterStatus === 'cancelled' || v.encounterStatus === 'discharged' || v.encounterStatus === 'in_ward' || v.encounterStatus === 'admitted'
             );
             // Sort encounters by creation date - latest first
-            patientEncounters.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-            setEncounters(patientEncounters);
+            filteredEncounters.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+            setEncounters(filteredEncounters);
         } catch (error) {
             console.error(error);
             toast.error('Error fetching encounters');
@@ -269,10 +272,10 @@ const NurseTriage = () => {
     const handleSelectEncounter = async (encounter) => {
         setSelectedEncounter(encounter);
 
-        // Check if already validated
-        if (encounter.paymentValidated) {
+        // Check if already validated OR if it's an ANC visit (bypass payment validation)
+        if (encounter.paymentValidated || encounter.isANC) {
             setReceiptValidated(true);
-            setReceiptNumber(encounter.receiptNumber || 'PRE-VALIDATED');
+            setReceiptNumber(encounter.receiptNumber || (encounter.isANC ? 'ANC-BYPASS' : 'PRE-VALIDATED'));
         } else {
             setReceiptValidated(false);
             setReceiptNumber('');
@@ -294,8 +297,8 @@ const NurseTriage = () => {
             // Fetch encounter charges
             await fetchEncounterCharges(encounter._id);
 
-            // Fetch drug administration data if admitted
-            if (encounter.encounterStatus === 'admitted' || encounter.encounterStatus === 'in_ward') {
+            // Fetch drug administration data if Inpatient
+            if (encounter.type === 'Inpatient') {
                 await fetchDrugAdministrationData(encounter._id);
             }
 
@@ -517,7 +520,17 @@ const NurseTriage = () => {
         try {
             const config = { headers: { Authorization: `Bearer ${user.token}` } };
             const { data: prescriptions } = await axios.get(`${backendUrl}/api/prescriptions/visit/${encounterId}`, config);
-            setDispensedPrescriptions(prescriptions.filter(p => p.status === 'dispensed'));
+            const consumableKeywords = ['syringe', 'cannula', 'giving set', 'infusion set', 'needle', 'plaster', 'gloves', 'mask', 'catheter', 'bandage'];
+            const filteredPrescriptions = prescriptions.filter(p => p.status === 'dispensed').map(p => ({
+                ...p,
+                medicines: p.medicines.filter(m => {
+                    const isMedication = m.dosage || m.route || m.frequency;
+                    const isConsumable = consumableKeywords.some(keyword => m.name.toLowerCase().includes(keyword));
+                    return isMedication && !isConsumable;
+                })
+            })).filter(p => p.medicines.length > 0);
+            
+            setDispensedPrescriptions(filteredPrescriptions);
 
             const { data: history } = await axios.get(`${backendUrl}/api/drug-administration/visit/${encounterId}`, config);
             setAdministrationHistory(history);
@@ -789,6 +802,34 @@ const NurseTriage = () => {
         }
     };
 
+    const handleDischarge = async (e, encounter) => {
+        e.stopPropagation();
+        if (!window.confirm('Are you sure you want to discharge this patient? This will release their bed and close the encounter.')) {
+            return;
+        }
+
+        try {
+            setLoading(true);
+            const config = { headers: { Authorization: `Bearer ${user.token}` } };
+            await axios.put(`${backendUrl}/api/visits/${encounter._id}`, {
+                encounterStatus: 'discharged',
+                status: 'Discharged'
+            }, config);
+
+            toast.success('Patient discharged successfully!');
+            
+            // Refresh patient encounters if this patient is selected
+            if (selectedPatient && (selectedPatient._id === encounter.patient._id || selectedPatient._id === encounter.patient)) {
+                handleSelectPatient(selectedPatient);
+            }
+        } catch (error) {
+            console.error(error);
+            toast.error('Error discharging patient');
+        } finally {
+            setLoading(false);
+        }
+    };
+
     return (
         <Layout>
             {loading && <LoadingOverlay />}
@@ -830,7 +871,7 @@ const NurseTriage = () => {
                             >
                                 <p className="font-semibold">{patient.name}</p>
                                 <p className="text-sm text-gray-600">
-                                    MRN: {patient.mrn} | Age: {patient.age} | {patient.gender}
+                                    MRN: {patient.mrn} | Age: {formatAge(patient.age)} | {patient.gender}
                                 </p>
                             </div>
                         ))}
@@ -867,17 +908,24 @@ const NurseTriage = () => {
                                     >
                                         <div className="flex justify-between items-start">
                                             <div>
-                                                <p className="font-semibold">{encounter.type} Visit</p>
+                                                <p className="font-semibold flex items-center gap-2">
+                                                    {encounter.type} Visit
+                                                    {encounter.isANC && (
+                                                        <span className="bg-pink-100 text-pink-700 text-[10px] px-2 py-0.5 rounded-full font-bold flex items-center gap-1">
+                                                            🤰 ANC
+                                                        </span>
+                                                    )}
+                                                </p>
                                                 <p className="text-sm text-gray-600">
                                                     {new Date(encounter.createdAt).toLocaleDateString()} - Status: {encounter.encounterStatus}
                                                 </p>
                                             </div>
                                             <div className="flex flex-col items-end gap-2">
-                                                <span className={`px-3 py-1 rounded text-sm ${encounter.paymentValidated
+                                                <span className={`px-3 py-1 rounded text-sm ${(encounter.paymentValidated || encounter.isANC)
                                                     ? 'bg-green-100 text-green-800'
                                                     : 'bg-yellow-100 text-yellow-800'
                                                     }`}>
-                                                    {encounter.paymentValidated ? 'Paid' : 'Pending'}
+                                                    {(encounter.paymentValidated || encounter.isANC) ? (encounter.isANC ? 'ANC' : 'Paid') : 'Pending'}
                                                 </span>
 
                                                 {/* Admit Button (Active Outpatient/Emergency -> Inpatient) */}
@@ -893,10 +941,7 @@ const NurseTriage = () => {
                                                 {/* Discharge Button (Active Inpatients) */}
                                                 {encounter.type === 'Inpatient' && isEncounterActive(encounter) && (
                                                     <button
-                                                        onClick={(e) => {
-                                                            e.stopPropagation();
-                                                            window.location.href = `/patient/${encounter.patient._id || encounter.patient}`;
-                                                        }}
+                                                        onClick={(e) => handleDischarge(e, encounter)}
                                                         className="text-xs bg-red-600 text-white px-2 py-1 rounded hover:bg-red-700 z-10"
                                                     >
                                                         Discharge
@@ -917,7 +962,14 @@ const NurseTriage = () => {
                 <div className="bg-white p-6 rounded shadow mb-6">
                     <div className="bg-blue-50 p-4 rounded mb-6 flex justify-between items-center">
                         <div>
-                            <p className="font-bold">{selectedPatient.name} - {selectedEncounter.type} Visit</p>
+                            <p className="font-bold flex items-center gap-2">
+                                {selectedPatient.name} - {selectedEncounter.type} Visit
+                                {selectedEncounter.isANC && (
+                                    <span className="bg-pink-100 text-pink-700 text-xs px-2 py-1 rounded-full font-bold">
+                                        🤰 ANC Visit (Payment Bypassed)
+                                    </span>
+                                )}
+                            </p>
                             <p className="text-sm text-gray-600">
                                 {new Date(selectedEncounter.createdAt).toLocaleDateString()}
                             </p>
@@ -962,7 +1014,7 @@ const NurseTriage = () => {
                         <div>
                             <div className="bg-green-50 p-4 rounded mb-6">
                                 <p className="text-green-700 font-semibold flex items-center gap-2">
-                                    <FaCheckCircle /> Payment Validated - Receipt #{receiptNumber}
+                                    <FaCheckCircle /> {selectedEncounter.isANC ? 'ANC Visit - Payment Verification Bypassed' : `Payment Validated - Receipt #${receiptNumber}`}
                                 </p>
                             </div>
 
@@ -1048,8 +1100,8 @@ const NurseTriage = () => {
                                 </div>
                             )}
 
-                            {/* Drug Observation Chart - Only for Admitted Patients */}
-                            {(selectedEncounter.encounterStatus === 'admitted' || selectedEncounter.encounterStatus === 'in_ward' || selectedEncounter.encounterStatus === 'in_progress') && (
+                            {/* Drug Observation Chart - Only for Admitted Inpatients */}
+                            {(selectedEncounter.type === 'Inpatient' && selectedEncounter.encounterStatus !== 'discharged' && selectedEncounter.encounterStatus !== 'cancelled') && (
                                 <div className="mb-8">
                                     <div className="bg-gradient-to-r from-blue-700 to-blue-600 text-white p-3 rounded-t-lg flex justify-between items-center shadow-md">
                                         <h4 className="font-bold flex items-center gap-2">
@@ -1177,7 +1229,7 @@ const NurseTriage = () => {
                                                                                                             medicineId: m._id || m.name,
                                                                                                             medicineName: m.name,
                                                                                                             dosage: m.dosage || '',
-                                                                                                            date: currentDate.toISOString().split('T')[0],
+                                                                                                            date: new Date().toISOString().split('T')[0],
                                                                                                             time: new Date().toTimeString().slice(0, 5),
                                                                                                             remarks: ''
                                                                                                         });
@@ -1240,6 +1292,12 @@ const NurseTriage = () => {
                                     <div className="flex gap-2">
                                         {!isReadOnly && (
                                             <>
+                                                <button
+                                                    onClick={() => navigate(`/patient/${selectedPatient?._id}`)}
+                                                    className="bg-orange-600 text-white px-4 py-2 rounded hover:bg-orange-700 flex items-center gap-2 text-sm shadow-sm transition-all"
+                                                >
+                                                    <FaHistory /> View Clinical History
+                                                </button>
                                                 <button
                                                     onClick={() => setShowChargesModal(true)}
                                                     className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 flex items-center gap-2 text-sm"

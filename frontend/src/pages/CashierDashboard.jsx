@@ -6,6 +6,7 @@ import Layout from '../components/Layout';
 import { FaDollarSign, FaReceipt, FaPrint, FaSearch, FaCheckCircle, FaTrashAlt, FaUserFriends, FaHospital } from 'react-icons/fa';
 import { toast } from 'react-toastify';
 import LoadingOverlay from '../components/loadingOverlay';
+import { formatAge } from '../utils/patientUtils';
 
 const CashierDashboard = () => {
     const [loading, setLoading] = useState(false);
@@ -115,8 +116,10 @@ const CashierDashboard = () => {
         setEncounterCharges([]);
         setSelectedCharges([]);
 
-        // Set default payment method based on provider
-        if (patient.provider === 'Retainership') {
+        // Set default payment method based on deposit balance or provider
+        if (patient.depositBalance > 0) {
+            setPaymentMethod('deposit');
+        } else if (patient.provider === 'Retainership') {
             setPaymentMethod('retainership');
         } else if (['NHIA', 'KSCHMA', 'State Scheme'].includes(patient.provider)) {
             setPaymentMethod('insurance');
@@ -518,7 +521,7 @@ const CashierDashboard = () => {
                                     className="p-3 border rounded hover:bg-gray-50 cursor-pointer"
                                 >
                                     <p className="font-semibold">{patient.name}</p>
-                                    <p className="text-sm text-gray-600">MRN: {patient.mrn} | Age: {patient.age} | {patient.gender}</p>
+                                    <p className="text-sm text-gray-600">MRN: {patient.mrn} | Age: {formatAge(patient.age)} | {patient.gender}</p>
                                 </div>
                             ))}
                         </div>
@@ -542,6 +545,12 @@ const CashierDashboard = () => {
                                         >
                                             ← Change Patient
                                         </button>
+                                        {selectedPatient.depositBalance > 0 && (
+                                            <div className="mt-2 p-2 bg-green-100 border border-green-200 rounded">
+                                                <p className="text-xs font-bold text-green-800 uppercase">Available Deposit</p>
+                                                <p className="text-lg font-black text-green-900">₦{selectedPatient.depositBalance.toLocaleString()}</p>
+                                            </div>
+                                        )}
                                     </div>
                                     <div className="w-1/3">
                                         <label className="block text-gray-700 text-sm font-semibold mb-1">Payment Method</label>

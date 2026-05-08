@@ -7,6 +7,7 @@ import Layout from '../components/Layout';
 import { FaUserMd, FaSearch, FaBed, FaUserInjured, FaHospital } from 'react-icons/fa';
 import { toast } from 'react-toastify';
 import LoadingOverlay from '../components/loadingOverlay';
+import { formatAge } from '../utils/patientUtils';
 
 const InpatientManagement = () => {
     const [loading, setLoading] = useState(false);
@@ -41,14 +42,16 @@ const InpatientManagement = () => {
         try {
             setLoading(true);
             const config = { headers: { Authorization: `Bearer ${user.token}` } };
-            // Fetch visits with admitted or in_ward status
-            const { data } = await axios.get(`${backendUrl}/api/visits?encounterStatus=admitted,in_ward`, config);
+            // Fetch all inpatient visits and filter for active ones in the frontend for maximum compatibility
+            const { data } = await axios.get(`${backendUrl}/api/visits?type=Inpatient`, config);
+            
+            const activeInpatients = data.filter(v => v.patient && v.encounterStatus !== 'discharged' && v.encounterStatus !== 'cancelled');
             
             // Sort by admission date or created date (latest first)
-            data.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+            activeInpatients.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
             
-            setInpatients(data);
-            setFilteredInpatients(data);
+            setInpatients(activeInpatients);
+            setFilteredInpatients(activeInpatients);
         } catch (error) {
             console.error('Error fetching inpatients:', error);
             toast.error('Error fetching inpatient list');
@@ -89,8 +92,13 @@ const InpatientManagement = () => {
     };
 
     const handleSelectPatient = (visit) => {
-        // Navigate to triage page with pre-selected patient and encounter
-        navigate(`/nurse/triage/${visit.patient._id}/${visit._id}`);
+        if (user.role === 'doctor') {
+            // Navigate to patient details for doctors
+            navigate(`/patient/${visit.patient._id}`);
+        } else {
+            // Navigate to triage page for nurses
+            navigate(`/nurse/triage/${visit.patient._id}/${visit._id}`);
+        }
     };
 
     return (
@@ -164,7 +172,7 @@ const InpatientManagement = () => {
                                         </p>
                                     </div>
                                     <div className="bg-white/20 px-2 py-1 rounded text-xs">
-                                        {visit.patient.gender} | {visit.patient.age}Y
+                                        {visit.patient.gender} | {formatAge(visit.patient.age)}
                                     </div>
                                 </div>
                             </div>

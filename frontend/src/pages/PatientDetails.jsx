@@ -2,13 +2,14 @@ import { useState, useEffect, useContext } from 'react';
 import { useParams } from 'react-router-dom';
 import axios from 'axios';
 import { toast } from 'react-toastify';
+import { formatAge } from '../utils/patientUtils';
 import AuthContext from '../context/AuthContext';
 import { AppContext } from '../context/AppContext';
 import { checkRange, getRangeColorClass } from '../utils/labUtils';
 import Layout from '../components/Layout';
 import LoadingOverlay from '../components/loadingOverlay';
 import AppointmentModal from '../components/AppointmentModal';
-import { FaTimes, FaFileMedical, FaPills, FaChevronDown, FaChevronUp, FaHeartbeat, FaNotesMedical, FaProcedures, FaXRay, FaVial, FaUserMd, FaCalendarPlus, FaPlus, FaTrash, FaEdit, FaSearch } from 'react-icons/fa';
+import { FaTimes, FaFileMedical, FaPills, FaChevronDown, FaChevronUp, FaHeartbeat, FaNotesMedical, FaProcedures, FaXRay, FaVial, FaUserMd, FaCalendarPlus, FaPlus, FaTrash, FaEdit, FaSearch, FaClock, FaChevronRight } from 'react-icons/fa';
 import icd11Data from '../data/icd11.json';
 
 const PatientDetails = () => {
@@ -110,6 +111,8 @@ const PatientDetails = () => {
     const [clinicalNotes, setClinicalNotes] = useState([]); // New state for clinical notes
     const [newNote, setNewNote] = useState(''); // State for new note input
     const [showNoteModal, setShowNoteModal] = useState(false); // Modal for adding note
+    const [dispensedPrescriptions, setDispensedPrescriptions] = useState([]);
+    const [administrationHistory, setAdministrationHistory] = useState([]);
 
     // Modal States
     const [showLabModal, setShowLabModal] = useState(false);
@@ -334,7 +337,7 @@ const PatientDetails = () => {
 
 
     useEffect(() => {
-        if (user && user.token) {
+        if (user && user.token && id && id !== 'undefined') {
             fetchPatient();
             fetchCharges();
         }
@@ -348,9 +351,9 @@ const PatientDetails = () => {
             const foundPatient = data.find(p => p._id === id);
             setPatient(foundPatient);
 
-            // Fetch all visits for history
-            const visitsRes = await axios.get(`${backendUrl}/api/visits`, config);
-            const patientVisits = visitsRes.data.filter(v => v.patient._id === id || v.patient === id);
+            // Fetch all visits for this specific patient
+            const visitsRes = await axios.get(`${backendUrl}/api/visits?patient=${id}`, config);
+            const patientVisits = visitsRes.data;
 
             // Sort by date desc
             patientVisits.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
@@ -407,9 +410,37 @@ const PatientDetails = () => {
             // Referrals
             setReferrals(referralsRes.data);
 
+            // Fetch drug administration data if Inpatient
+            if (visitRes.data.type === 'Inpatient') {
+                await fetchDrugAdministrationData(encounterId, config);
+            }
+
         } catch (error) {
             console.error('Error fetching encounter details', error);
             toast.error('Error fetching data');
+        }
+    };
+
+    const fetchDrugAdministrationData = async (encounterId, config) => {
+        try {
+            const [rxRes, historyRes] = await Promise.all([
+                axios.get(`${backendUrl}/api/prescriptions/visit/${encounterId}`, config),
+                axios.get(`${backendUrl}/api/drug-administration/visit/${encounterId}`, config)
+            ]);
+            const consumableKeywords = ['syringe', 'cannula', 'giving set', 'infusion set', 'needle', 'plaster', 'gloves', 'mask', 'catheter', 'bandage'];
+            const dispensedRx = rxRes.data.filter(p => p.status === 'dispensed').map(p => ({
+                ...p,
+                medicines: p.medicines.filter(m => {
+                    const isMedication = m.dosage || m.route || m.frequency;
+                    const isConsumable = consumableKeywords.some(keyword => m.name.toLowerCase().includes(keyword));
+                    return isMedication && !isConsumable;
+                })
+            })).filter(p => p.medicines.length > 0);
+            
+            setDispensedPrescriptions(dispensedRx);
+            setAdministrationHistory(historyRes.data);
+        } catch (error) {
+            console.error('Error fetching drug admin data:', error);
         }
     };
 
@@ -476,7 +507,7 @@ const PatientDetails = () => {
     };
 
     // Determine if user can edit (read-only for receptionists, viewing past encounters, or inactive encounters)
-    const canEdit = ['doctor', 'nurse', 'admin'].includes(user?.role) && !viewingPastEncounter && isEncounterActive();
+    const canEdit = ['doctor', 'admin'].includes(user?.role) && !viewingPastEncounter && isEncounterActive();
 
     const fetchCharges = async () => {
         try {
@@ -558,6 +589,11 @@ const PatientDetails = () => {
             return;
         }
 
+        if (!soapNote.diagnosis || soapNote.diagnosis.length === 0) {
+            toast.error('Diagnosis is compulsory. Please search and select at least one ICD diagnosis.');
+            return;
+        }
+
         try {
             setLoading(true);
             const config = { headers: { Authorization: `Bearer ${user.token}` } };
@@ -617,7 +653,7 @@ const PatientDetails = () => {
     const handleAddLabToQueue = () => {
         if (!selectedLabTest) return;
         const test = labCharges.find(c => c._id === selectedLabTest);
-        
+
         if (test && test.active === false) {
             toast.error('This investigation is currently inactive or out of reagent.');
             return;
@@ -698,7 +734,7 @@ const PatientDetails = () => {
     const handleAddRadToQueue = () => {
         if (!selectedRadTest) return;
         const scan = radiologyCharges.find(c => c._id === selectedRadTest);
-        
+
         if (scan && scan.active === false) {
             toast.error('This investigation is currently inactive or out of reagent.');
             return;
@@ -1126,7 +1162,7 @@ const PatientDetails = () => {
                             </div>
                             <div class="flex-field" style="flex: 1; margin-left: 20px;">
                                 <span class="label">Age:</span>
-                                <span class="input-line">${patient.age}</span>
+                                <span class="input-line">${formatAge(patient.age)}</span>
                             </div>
                             <div class="flex-field" style="flex: 1; margin-left: 20px;">
                                 <span class="label">Gender:</span>
@@ -1266,7 +1302,7 @@ const PatientDetails = () => {
             <div className="mb-6 flex justify-between items-start">
                 <div>
                     <h2 className="text-2xl font-bold text-gray-800">{patient.name}</h2>
-                    <p className="text-gray-600">MRN: {patient.mrn} | Age: {patient.age} | {patient.gender}</p>
+                    <p className="text-gray-600">MRN: {patient.mrn} | Age: {formatAge(patient.age)} | {patient.gender}</p>
                     {encounter && (
                         <div className="flex items-center gap-4 mt-2">
                             <p className="text-sm text-blue-600">
@@ -1327,7 +1363,7 @@ const PatientDetails = () => {
                                     const diagStr = (encounter.diagnosis || []).map(d => `${d.code}: ${d.description}`).join(', ');
 
                                     const historyParts = [];
-                                    
+
                                     // Encounter (SOAP) Details
                                     if (encounter.presentingComplaints) historyParts.push(`Presenting Complaints: ${encounter.presentingComplaints}`);
                                     if (encounter.historyOfPresentingComplaint) historyParts.push(`HPC: ${encounter.historyOfPresentingComplaint}`);
@@ -1394,7 +1430,7 @@ const PatientDetails = () => {
                                             onClick={() => setActiveTab('vitals')}
                                             className={`px-6 py-3 font-semibold flex items-center gap-2 ${activeTab === 'vitals' ? 'border-b-2 border-blue-600 text-blue-600' : 'text-gray-600 hover:text-gray-800'}`}
                                         >
-                                            <FaHeartbeat /> Vitals
+                                            <FaHeartbeat /> Nursing Triage
                                         </button>
                                         <button
                                             onClick={() => setActiveTab('soap')}
@@ -1606,35 +1642,167 @@ const PatientDetails = () => {
                                                     </div>
                                                 );
                                             }
-                                            return null;
                                         })()}
+
+                                        {/* Drug Observation Chart (MAR) - For Inpatients */}
+                                        {encounter.type === 'Inpatient' && (
+                                            <div className="mt-8 border rounded-lg overflow-hidden shadow-sm bg-white">
+                                                <div className="bg-blue-600 text-white p-3 flex justify-between items-center">
+                                                    <h4 className="font-bold flex items-center gap-2">
+                                                        <FaClock /> Drug Observation Chart (MAR)
+                                                    </h4>
+                                                </div>
+
+                                                <div className="p-4 bg-white">
+                                                    {dispensedPrescriptions.length === 0 ? (
+                                                        <div className="text-center py-6 text-gray-500 italic bg-gray-50 rounded border border-dashed">
+                                                            No dispensed medications found for this encounter.
+                                                        </div>
+                                                    ) : (
+                                                        <div className="space-y-4">
+                                                            {(() => {
+                                                                const admissionDate = new Date(encounter.createdAt);
+                                                                admissionDate.setHours(0, 0, 0, 0);
+
+                                                                // Get all unique dates from history, and today
+                                                                const historyDates = [...new Set(administrationHistory.map(h => {
+                                                                    const d = new Date(h.administeredAt);
+                                                                    d.setHours(0, 0, 0, 0);
+                                                                    return d.getTime();
+                                                                }))];
+
+                                                                const today = new Date();
+                                                                today.setHours(0, 0, 0, 0);
+                                                                if (!historyDates.includes(today.getTime())) {
+                                                                    historyDates.push(today.getTime());
+                                                                }
+
+                                                                return historyDates.sort().reverse().map((dateTimestamp, idx) => {
+                                                                    const currentDate = new Date(dateTimestamp);
+                                                                    const diffTime = dateTimestamp - admissionDate.getTime();
+                                                                    const dayNum = Math.floor(diffTime / (1000 * 60 * 60 * 24)) + 1;
+                                                                    const isExpanded = expandedDays[dateTimestamp] !== false;
+
+                                                                    const dayHistory = administrationHistory.filter(h => {
+                                                                        const d = new Date(h.administeredAt);
+                                                                        d.setHours(0, 0, 0, 0);
+                                                                        return d.getTime() === dateTimestamp;
+                                                                    });
+
+                                                                    const dayTimes = [...new Set(dayHistory.map(h =>
+                                                                        new Date(h.administeredAt).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })
+                                                                    ))].sort();
+
+                                                                    return (
+                                                                        <div key={dateTimestamp} className="border rounded mb-3 overflow-hidden">
+                                                                            <button
+                                                                                onClick={() => setExpandedDays(prev => ({ ...prev, [dateTimestamp]: !isExpanded }))}
+                                                                                className="w-full bg-gray-50 px-4 py-2 hover:bg-blue-50 transition-colors flex items-center justify-between text-blue-900"
+                                                                            >
+                                                                                <div className="flex items-center gap-3">
+                                                                                    {isExpanded ? <FaChevronDown size={12} /> : <FaChevronRight size={12} />}
+                                                                                    <span className="font-bold text-sm">Day {dayNum} <span className="text-gray-400 font-normal ml-2">({currentDate.toLocaleDateString('en-GB')})</span></span>
+                                                                                    {dayNum === 1 && <span className="text-[9px] bg-blue-100 text-blue-600 px-1.5 py-0.5 rounded font-bold">ADMISSION</span>}
+                                                                                    {dateTimestamp === today.getTime() && <span className="text-[9px] bg-green-100 text-green-600 px-1.5 py-0.5 rounded font-bold">TODAY</span>}
+                                                                                </div>
+                                                                                <div className="text-[10px] text-gray-500">
+                                                                                    {dayHistory.length} Administrations recorded
+                                                                                </div>
+                                                                            </button>
+
+                                                                            {isExpanded && (
+                                                                                <div className="overflow-x-auto">
+                                                                                    <table className="w-full text-xs text-left border-collapse">
+                                                                                        <thead className="bg-gray-100 border-b">
+                                                                                            <tr>
+                                                                                                <th className="p-2 border-r font-bold text-gray-600 w-64">Medication</th>
+                                                                                                {dayTimes.length > 0 ? dayTimes.map(timeStr => (
+                                                                                                    <th key={timeStr} className="p-2 border-r font-bold text-gray-600 text-center min-w-[70px]">
+                                                                                                        {timeStr}
+                                                                                                    </th>
+                                                                                                )) : (
+                                                                                                    <th className="p-2 border-r font-bold text-gray-400 text-center italic">No records for this day</th>
+                                                                                                )}
+                                                                                            </tr>
+                                                                                        </thead>
+                                                                                        <tbody>
+                                                                                            {dispensedPrescriptions.flatMap(p => p.medicines.map(m => (
+                                                                                                <tr key={`${p._id}-${m._id || m.name}`} className="hover:bg-blue-50/10 border-b last:border-0 transition-colors">
+                                                                                                    <td className="p-2 border-r">
+                                                                                                        <div className="font-bold text-blue-950 leading-tight">{m.name}</div>
+                                                                                                        <div className="text-[9px] text-gray-500 flex items-center gap-1 mt-0.5">
+                                                                                                            <span className="font-medium text-gray-700">{m.dosage}</span>
+                                                                                                            <span>|</span>
+                                                                                                            <span className="font-medium text-gray-700">{m.frequency}</span>
+                                                                                                            {m.route && <><span className="text-orange-500 font-bold px-1 rounded uppercase bg-orange-50 text-[8px] border border-orange-100">{m.route}</span></>}
+                                                                                                        </div>
+                                                                                                    </td>
+                                                                                                    {dayTimes.map(timeStr => {
+                                                                                                        const admin = dayHistory.find(h =>
+                                                                                                            new Date(h.administeredAt).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }) === timeStr &&
+                                                                                                            (h.medicineId === m._id || h.medicineName === m.name)
+                                                                                                        );
+                                                                                                        return (
+                                                                                                            <td key={timeStr} className="p-2 border-r text-center">
+                                                                                                                {admin ? (
+                                                                                                                    <div className="inline-flex flex-col items-center justify-center p-1 rounded-md bg-green-50 border border-green-200 shadow-sm group relative cursor-help">
+                                                                                                                        <span className="font-black text-[8px] text-green-700 uppercase tracking-tighter">Given</span>
+                                                                                                                        <span className="text-[7px] text-green-600 leading-none">{admin.nurse?.name?.split(' ')[0]}</span>
+                                                                                                                        {admin.remarks && (
+                                                                                                                            <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-40 bg-gray-900 border border-gray-700 text-white p-2 rounded-lg text-[9px] hidden group-hover:block z-50 shadow-2xl backdrop-blur-sm">
+                                                                                                                                <div className="font-bold text-blue-300 mb-1 border-b border-gray-700 pb-1">Remark:</div>
+                                                                                                                                {admin.remarks}
+                                                                                                                                <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-gray-900"></div>
+                                                                                                                            </div>
+                                                                                                                        )}
+                                                                                                                    </div>
+                                                                                                                ) : <span className="text-gray-200">-</span>}
+                                                                                                            </td>
+                                                                                                        );
+                                                                                                    })}
+                                                                                                </tr>
+                                                                                            )))}
+                                                                                        </tbody>
+                                                                                    </table>
+                                                                                </div>
+                                                                            )}
+                                                                        </div>
+                                                                    );
+                                                                });
+                                                            })()}
+                                                        </div>
+                                                    )}
+                                                </div>
+                                                <div className="p-3 bg-gray-50 text-[10px] text-gray-500 flex items-center gap-2 border-t italic">
+                                                    <FaClock className="text-blue-400" /> This is a read-only view of the medication administration record.
+                                                </div>
+                                            </div>
+                                        )}
                                     </div>
                                 )}
 
                                 {/* SOAP Notes Tab */}
                                 {activeTab === 'soap' && (
                                     <div>
-                                        <div className="flex justify-between items-center mb-4">
-                                            <h3 className="text-xl font-bold">Clinical Documentation</h3>
-                                            {(() => {
-                                                const hasNote = !!(encounter.presentingComplaints || encounter.historyOfPresentingComplaint ||
-                                                    encounter.assessment || encounter.plan ||
-                                                    (encounter.diagnosis && encounter.diagnosis.length > 0) ||
-                                                    encounter.generalAppearance || encounter.heent);
-                                                const isAuthor = encounter.consultingPhysician?._id === user?._id ||
-                                                    encounter.consultingPhysician === user?._id;
-                                                const isEditMode = hasNote && isAuthor;
-                                                return (
-                                                    <button
-                                                        onClick={() => setShowSoapModal(true)}
-                                                        disabled={!canEdit}
-                                                        className={`px-4 py-2 rounded flex items-center gap-2 ${!canEdit ? 'bg-gray-300 cursor-not-allowed text-gray-500' : isEditMode ? 'bg-blue-600 text-white hover:bg-blue-700' : 'bg-green-600 text-white hover:bg-green-700'}`}
-                                                    >
-                                                        {isEditMode ? <><FaEdit /> Edit Clinical Note</> : <><FaPlus /> Add Clinical Note</>}
-                                                    </button>
-                                                );
-                                            })()}
-                                        </div>
+                                        <h3 className="text-xl font-bold">Clinical Documentation</h3>
+                                        {(() => {
+                                            const hasNote = !!(encounter.presentingComplaints || encounter.historyOfPresentingComplaint ||
+                                                encounter.assessment || encounter.plan ||
+                                                (encounter.diagnosis && encounter.diagnosis.length > 0) ||
+                                                encounter.generalAppearance || encounter.heent);
+                                            const isAuthor = encounter.consultingPhysician?._id === user?._id ||
+                                                encounter.consultingPhysician === user?._id;
+                                            const isEditMode = hasNote && isAuthor;
+                                            return (
+                                                <button
+                                                    onClick={() => setShowSoapModal(true)}
+                                                    disabled={!canEdit}
+                                                    className={`px-4 py-2 rounded flex items-center gap-2 ${!canEdit ? 'bg-gray-300 cursor-not-allowed text-gray-500' : isEditMode ? 'bg-blue-600 text-white hover:bg-blue-700' : 'bg-green-600 text-white hover:bg-green-700'}`}
+                                                >
+                                                    {isEditMode ? <><FaEdit /> Edit Clinical Note</> : <><FaPlus /> Add Clinical Note</>}
+                                                </button>
+                                            );
+                                        })()}
                                         {/* Check if any clinical documentation exists */}
                                         {(encounter.presentingComplaints || encounter.historyOfPresentingComplaint ||
                                             encounter.systemReview || encounter.pastMedicalSurgicalHistory ||
@@ -2341,7 +2509,7 @@ const PatientDetails = () => {
 
 
                                         {/* Convert to Inpatient Button - Nurse/Receptionist Only */}
-                                        {['nurse', 'receptionist', 'admin'].includes(user.role) && (encounter?.type === 'Outpatient' || encounter?.type === 'Emergency') && isEncounterActive() && !viewingPastEncounter && (
+                                        {['receptionist', 'admin'].includes(user.role) && (encounter?.type === 'Outpatient' || encounter?.type === 'Emergency') && isEncounterActive() && !viewingPastEncounter && (
                                             <button
                                                 onClick={() => setShowConvertModal(true)}
                                                 className="bg-purple-600 text-white px-4 py-2 rounded flex items-center gap-2 hover:bg-purple-700 transition"
@@ -2654,10 +2822,12 @@ const PatientDetails = () => {
                                     <h4 className="font-bold text-lg mb-3 text-gray-800">Assessment & Plan</h4>
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                         <div>
-                                            <label className="block text-gray-700 mb-2 font-semibold">A - Assessment (Diagnosis)</label>
+                                            <label className="block text-gray-700 mb-2 font-semibold">
+                                                A - Assessment (Diagnosis) <span className="text-red-500">*</span>
+                                            </label>
 
                                             {/* ICD11 Search and Add */}
-                                            <div className="space-y-3 p-3 border rounded bg-gray-50 mb-3">
+                                            <div className={`space-y-3 p-3 border rounded mb-3 ${soapNote.diagnosis.length === 0 ? 'bg-red-50 border-red-300' : 'bg-gray-50'}`}>
                                                 <div className="relative">
                                                     <div className="flex gap-2">
                                                         <div className="relative flex-1">
@@ -2678,38 +2848,72 @@ const PatientDetails = () => {
 
                                                     {showDiagDropdown && diagSearchTerm && (
                                                         <div className="absolute z-20 w-full bg-white border rounded shadow-xl max-h-60 overflow-y-auto mt-1 border-gray-200">
-                                                            {icd11Data.filter(d =>
-                                                                d.code.toLowerCase().includes(diagSearchTerm.toLowerCase()) ||
-                                                                d.description.toLowerCase().includes(diagSearchTerm.toLowerCase())
-                                                            ).length > 0 ? (
-                                                                icd11Data.filter(d =>
+                                                            {(() => {
+                                                                const customCodes = JSON.parse(localStorage.getItem('kuntau_customIcdCodes') || '[]');
+                                                                const allDiagData = [...icd11Data, ...customCodes];
+                                                                const filtered = allDiagData.filter(d =>
                                                                     d.code.toLowerCase().includes(diagSearchTerm.toLowerCase()) ||
                                                                     d.description.toLowerCase().includes(diagSearchTerm.toLowerCase())
-                                                                ).map((diag, idx) => (
-                                                                    <div
-                                                                        key={idx}
-                                                                        className="p-3 hover:bg-blue-50 cursor-pointer text-sm border-b last:border-0 flex justify-between items-center transition-colors"
-                                                                        onClick={() => {
-                                                                            if (!soapNote.diagnosis.find(d => d.code === diag.code)) {
-                                                                                setSoapNote({
-                                                                                    ...soapNote,
-                                                                                    diagnosis: [...soapNote.diagnosis, diag]
-                                                                                });
-                                                                            }
-                                                                            setDiagSearchTerm('');
-                                                                            setShowDiagDropdown(false);
-                                                                        }}
-                                                                    >
-                                                                        <div>
-                                                                            <span className="font-bold text-blue-700 mr-2">{diag.code}</span>
-                                                                            <span className="text-gray-700">{diag.description}</span>
+                                                                );
+
+                                                                if (filtered.length > 0) {
+                                                                    return filtered.map((diag, idx) => (
+                                                                        <div
+                                                                            key={idx}
+                                                                            className="p-3 hover:bg-blue-50 cursor-pointer text-sm border-b last:border-0 flex justify-between items-center transition-colors"
+                                                                            onClick={() => {
+                                                                                if (!soapNote.diagnosis.find(d => d.code === diag.code)) {
+                                                                                    setSoapNote({
+                                                                                        ...soapNote,
+                                                                                        diagnosis: [...soapNote.diagnosis, diag]
+                                                                                    });
+                                                                                }
+                                                                                setDiagSearchTerm('');
+                                                                                setShowDiagDropdown(false);
+                                                                            }}
+                                                                        >
+                                                                            <div>
+                                                                                <span className={`font-bold mr-2 ${diag.code.startsWith('CUST-') ? 'text-orange-600' : 'text-blue-700'}`}>{diag.code}</span>
+                                                                                <span className="text-gray-700">{diag.description}</span>
+                                                                                {diag.code.startsWith('CUST-') && (
+                                                                                    <span className="ml-2 text-xs bg-orange-100 text-orange-600 px-1 rounded">Custom</span>
+                                                                                )}
+                                                                            </div>
+                                                                            <FaPlus className="text-blue-500" />
                                                                         </div>
-                                                                        <FaPlus className="text-blue-500" />
+                                                                    ));
+                                                                }
+
+                                                                return (
+                                                                    <div className="p-3">
+                                                                        <p className="text-gray-400 text-xs text-center mb-2">No matching ICD-11 codes found for "<strong>{diagSearchTerm}</strong>"</p>
+                                                                        <button
+                                                                            className="w-full bg-orange-500 text-white text-sm px-3 py-2 rounded hover:bg-orange-600 flex items-center justify-center gap-2 transition-colors font-semibold"
+                                                                            onClick={() => {
+                                                                                const stored = JSON.parse(localStorage.getItem('kuntau_customIcdCodes') || '[]');
+                                                                                const nextNum = stored.length + 1;
+                                                                                const newEntry = {
+                                                                                    code: `CUST-${String(nextNum).padStart(3, '0')}`,
+                                                                                    description: diagSearchTerm.trim()
+                                                                                };
+                                                                                // Avoid duplicates
+                                                                                const alreadyExists = stored.find(c => c.description.toLowerCase() === newEntry.description.toLowerCase());
+                                                                                const entryToAdd = alreadyExists || newEntry;
+                                                                                if (!alreadyExists) {
+                                                                                    localStorage.setItem('kuntau_customIcdCodes', JSON.stringify([...stored, newEntry]));
+                                                                                }
+                                                                                if (!soapNote.diagnosis.find(d => d.description.toLowerCase() === entryToAdd.description.toLowerCase())) {
+                                                                                    setSoapNote({ ...soapNote, diagnosis: [...soapNote.diagnosis, entryToAdd] });
+                                                                                }
+                                                                                setDiagSearchTerm('');
+                                                                                setShowDiagDropdown(false);
+                                                                            }}
+                                                                        >
+                                                                            <FaPlus /> Add "{diagSearchTerm}" as custom diagnosis
+                                                                        </button>
                                                                     </div>
-                                                                ))
-                                                            ) : (
-                                                                <div className="p-4 text-gray-500 text-sm text-center">No matching ICD-11 codes found</div>
-                                                            )}
+                                                                );
+                                                            })()}
                                                         </div>
                                                     )}
                                                 </div>
@@ -2734,6 +2938,11 @@ const PatientDetails = () => {
                                                     </div>
                                                 )}
                                             </div>
+                                            {soapNote.diagnosis.length === 0 && (
+                                                <p className="text-xs text-red-600 mt-1 flex items-center gap-1">
+                                                    <span className="font-bold">⚠</span> At least one ICD-11 diagnosis is required before saving.
+                                                </p>
+                                            )}
                                         </div>
                                         <div>
                                             <label className="block text-gray-700 mb-2 font-semibold">P - Plan (Treatment Plan)</label>
@@ -2752,7 +2961,8 @@ const PatientDetails = () => {
                                 <div className="flex gap-2">
                                     <button
                                         onClick={handleSaveSOAP}
-                                        className="bg-green-600 text-white px-6 py-2 rounded hover:bg-green-700 font-semibold"
+                                        disabled={soapNote.diagnosis.length === 0}
+                                        className={`px-6 py-2 rounded font-semibold transition-colors ${soapNote.diagnosis.length === 0 ? 'bg-gray-300 text-gray-500 cursor-not-allowed' : 'bg-green-600 text-white hover:bg-green-700'}`}
                                     >
                                         Save SOAP Notes
                                     </button>
@@ -2762,6 +2972,9 @@ const PatientDetails = () => {
                                     >
                                         Cancel
                                     </button>
+                                    {soapNote.diagnosis.length === 0 && (
+                                        <span className="text-red-500 text-sm font-medium">⚠ Diagnosis required to save</span>
+                                    )}
                                 </div>
                             </div>
                         </div>

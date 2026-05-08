@@ -1,5 +1,6 @@
 const Patient = require('../models/patientModel');
 const FamilyFile = require('../models/familyFileModel');
+const Receipt = require('../models/receiptModel');
 const { generateMRN } = require('../utils/mrnGenerator');
 
 
@@ -8,7 +9,7 @@ const { generateMRN } = require('../utils/mrnGenerator');
 // @access  Private
 const registerPatient = async (req, res) => {
     try {
-        const { name, age, gender, contact, address, state, lga, medicalHistory, provider, hmo, insuranceNumber, emergencyContactName, emergencyContactPhone, isFamilyMember, familyFileId } = req.body;
+        const { name, age, dateOfBirth, gender, contact, address, state, lga, medicalHistory, provider, hmo, insuranceNumber, emergencyContactName, emergencyContactPhone, isFamilyMember, familyFileId } = req.body;
 
         // Validation for Family File
         let linkedFamilyFile = null;
@@ -30,6 +31,7 @@ const registerPatient = async (req, res) => {
             mrn,
             name,
             age,
+            dateOfBirth,
             gender,
             contact,
             address,
@@ -95,7 +97,8 @@ const updatePatient = async (req, res) => {
     if (patient) {
         // Update basic info
         patient.name = req.body.name || patient.name;
-        patient.age = req.body.age || patient.age;
+        patient.age = req.body.age !== undefined ? req.body.age : patient.age;
+        patient.dateOfBirth = req.body.dateOfBirth || patient.dateOfBirth;
         patient.gender = req.body.gender || patient.gender;
         patient.contact = req.body.contact || req.body.phoneNumber || patient.contact;
         patient.address = req.body.address || patient.address;
@@ -268,12 +271,53 @@ const getPatientById = async (req, res) => {
     }
 };
 
+// @desc    Refund deposit from patient account
+// @route   POST /api/patients/:id/refund
+// @access  Private
+const refundDeposit = async (req, res) => {
+    try {
+        const { amount } = req.body;
+        const patient = await Patient.findById(req.params.id);
+
+        if (!patient) {
+            return res.status(404).json({ message: 'Patient not found' });
+        }
+
+        if ((patient.depositBalance || 0) < Number(amount)) {
+            return res.status(400).json({ message: 'Insufficient deposit balance' });
+        }
+
+        patient.depositBalance = (patient.depositBalance || 0) - Number(amount);
+        const updatedPatient = await patient.save();
+
+        // Create a refund receipt to appear in statements
+        const receiptNumber = `RFD-${Date.now().toString().slice(-6)}-${Math.floor(1000 + Math.random() * 9000)}`;
+        await Receipt.create({
+            patient: patient._id,
+            amountPaid: -Number(amount), // Negative amount to reflect refund
+            paymentMethod: 'refund',
+            cashier: req.user._id,
+            receiptNumber,
+            paymentDate: Date.now()
+        });
+
+        res.json({
+            message: 'Deposit refunded successfully',
+            balance: updatedPatient.depositBalance,
+            patient: updatedPatient
+        });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
 module.exports = {
     registerPatient,
     getPatients,
     updatePatient,
     deletePatient,
     addDeposit,
+    refundDeposit,
     getDepositBalance,
     getRecentPatients,
     getPatientById,
