@@ -312,7 +312,17 @@ const dispenseWithInventory = async (req, res) => {
 
         // Process each medicine
         for (const med of medicines) {
-            const { name, quantityDispensed } = med;
+            const { name, quantityDispensed, buyOutside } = med;
+
+            // Skip inventory deduction for drugs marked as Buy Outside
+            if (buyOutside) {
+                inventoryUpdates.push({
+                    drug: name,
+                    deducted: 0,
+                    reason: 'External Purchase (Buy Outside) - No inventory deduction'
+                });
+                continue;
+            }
 
             // Find inventory items for this drug in the pharmacist's assigned pharmacy
             // If admin or main pharmacy, maybe allow selection? For now, assume strict assignment.
