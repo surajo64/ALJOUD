@@ -249,7 +249,7 @@ const PharmacyPrescriptions = () => {
                         <tbody>
                             ${items.map(p => p.medicines.map(med => `
                                 <tr>
-                                    <td>${med.name}</td>
+                                    <td>${med.name}${med.buyOutside ? ' <br/><small style="color: #e67e22; font-weight: bold;">(Buy Outside/Record Only)</small>' : ''}</td>
                                     <td>${med.dosage}</td>
                                     <td>${med.frequency}</td>
                                     <td>${(med.duration && !isNaN(med.duration)) ? `${med.duration} days` : med.duration}</td>
@@ -586,9 +586,15 @@ const PharmacyPrescriptions = () => {
                                                                 {renderMedicines(p.medicines)}
                                                             </div>
                                                             <div className="mt-2 flex gap-2">
-                                                                <span className={`text-xs px-3 py-1 rounded ${!p.charge ? 'bg-blue-100 text-blue-800' : p.charge.status === 'paid' ? 'bg-green-200 text-green-800' : 'bg-yellow-200 text-yellow-800'}`}>
-                                                                    {!p.charge ? 'Process' : p.charge.status === 'paid' ? 'Paid' : 'Unpaid'}
-                                                                </span>
+                                                                {p.medicines?.some(m => m.buyOutside) ? (
+                                                                    <span className="text-xs px-3 py-1 rounded bg-orange-100 text-orange-800 font-bold border border-orange-200">
+                                                                        External / Record Only
+                                                                    </span>
+                                                                ) : (
+                                                                    <span className={`text-xs px-3 py-1 rounded ${!p.charge ? 'bg-blue-100 text-blue-800' : p.charge.status === 'paid' ? 'bg-green-200 text-green-800' : 'bg-yellow-200 text-yellow-800'}`}>
+                                                                        {!p.charge ? 'Process' : p.charge.status === 'paid' ? 'Paid' : 'Unpaid'}
+                                                                    </span>
+                                                                )}
                                                                 <span className={`text-xs px-3 py-1 rounded ${p.status === 'dispensed' ? 'bg-blue-200 text-blue-800' : 'bg-gray-200 text-gray-600'}`}>
                                                                     {p.status}
                                                                 </span>

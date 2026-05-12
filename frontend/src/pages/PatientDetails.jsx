@@ -2354,7 +2354,14 @@ const PatientDetails = () => {
                                                                                     <div className="flex-1">
                                                                                         {rx.medicines.map((med, idx) => (
                                                                                             <div key={idx} className="mb-3 last:mb-0">
-                                                                                                <p className="font-semibold text-lg text-gray-800">{med.name}</p>
+                                                                                                <p className="font-semibold text-lg text-gray-800 flex items-center gap-2">
+                                                                                                    {med.name}
+                                                                                                    {med.buyOutside && (
+                                                                                                        <span className="text-[10px] bg-orange-100 text-orange-800 px-2 py-0.5 rounded border border-orange-200">
+                                                                                                            BUY OUTSIDE
+                                                                                                        </span>
+                                                                                                    )}
+                                                                                                </p>
                                                                                                 <div className="text-sm text-gray-600 space-y-1 mt-1">
                                                                                                     <p><span className="font-medium">Dosage:</span> {med.dosage}</p>
                                                                                                     <p><span className="font-medium">Frequency:</span> {med.frequency}</p>

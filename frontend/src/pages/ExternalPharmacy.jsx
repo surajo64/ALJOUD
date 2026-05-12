@@ -337,12 +337,14 @@ const ExternalPharmacy = () => {
                     config
                 );
 
-                // 2. Automatically generate charge
-                await axios.put(
-                    `${backendUrl}/api/prescriptions/${rxRes.data._id}/generate-charge`,
-                    { quantity: drugItem.quantity },
-                    config
-                );
+                // 2. Automatically generate charge - SKIP if Buy Outside
+                if (!drugItem.buyOutside) {
+                    await axios.put(
+                        `${backendUrl}/api/prescriptions/${rxRes.data._id}/generate-charge`,
+                        { quantity: drugItem.quantity },
+                        config
+                    );
+                }
             }
 
             // 3. Update encounter status to 'in_pharmacy'

@@ -136,6 +136,11 @@ const generatePrescriptionCharge = async (req, res) => {
             return res.status(400).json({ message: 'No medicine found in prescription' });
         }
 
+        // BLOCK: Prevent charging for drugs marked as Buy Outside
+        if (medicine.buyOutside) {
+            return res.status(400).json({ message: 'Cannot generate charge for a prescription marked for External Purchase (Buy Outside).' });
+        }
+
         // Find existing charge definition for the drug
         let drugCharge = await Charge.findOne({
             type: 'drugs',
