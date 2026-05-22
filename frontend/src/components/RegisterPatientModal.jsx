@@ -337,11 +337,18 @@ const RegisterPatientModal = ({ isOpen, onClose, onSuccess, userToken }) => {
                                     Contact Number <span className="text-red-500">*</span>
                                 </label>
                                 <input
-                                    type="text"
+                                    type="tel"
                                     name="contact"
                                     value={formData.contact}
-                                    onChange={handleChange}
+                                    onChange={(e) => {
+                                        const val = e.target.value.replace(/\D/g, '').slice(0, 11);
+                                        setFormData(prev => ({ ...prev, contact: val }));
+                                    }}
                                     className="w-full border p-2 rounded"
+                                    placeholder="e.g. 08012345678"
+                                    maxLength={11}
+                                    pattern="[0-9]{11}"
+                                    title="Phone number must be exactly 11 digits"
                                     required
                                 />
                             </div>
@@ -349,13 +356,14 @@ const RegisterPatientModal = ({ isOpen, onClose, onSuccess, userToken }) => {
 
                         {/* Address */}
                         <div>
-                            <label className="block text-sm font-semibold mb-1">Address</label>
+                            <label className="block text-sm font-semibold mb-1">Address <span className="text-red-500">*</span></label>
                             <input
                                 type="text"
                                 name="address"
                                 value={formData.address}
                                 onChange={handleChange}
                                 className="w-full border p-2 rounded"
+                                required
                             />
                         </div>
 
@@ -492,11 +500,18 @@ const RegisterPatientModal = ({ isOpen, onClose, onSuccess, userToken }) => {
                                         Emergency Contact Phone
                                     </label>
                                     <input
-                                        type="text"
+                                        type="tel"
                                         name="emergencyContactPhone"
                                         value={formData.emergencyContactPhone}
-                                        onChange={handleChange}
+                                        onChange={(e) => {
+                                            const val = e.target.value.replace(/\D/g, '').slice(0, 11);
+                                            setFormData(prev => ({ ...prev, emergencyContactPhone: val }));
+                                        }}
                                         className="w-full border p-2 rounded"
+                                        placeholder="e.g. 08012345678"
+                                        maxLength={11}
+                                        pattern="[0-9]{11}"
+                                        title="Phone number must be exactly 11 digits"
                                     />
                                 </div>
                             </div>

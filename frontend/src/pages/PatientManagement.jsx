@@ -989,13 +989,14 @@ const PatientManagement = () => {
                                 </div>
                             </div>
                             <div>
-                                <label className="block text-sm font-semibold mb-1">Address</label>
+                                <label className="block text-sm font-semibold mb-1">Address *</label>
                                 <textarea
                                     className="w-full border p-2 rounded"
                                     rows="2"
                                     name="address"
                                     value={editPatient.address || ''}
                                     onChange={handleEditChange}
+                                    required
                                 />
                             </div>
 
@@ -1219,9 +1220,8 @@ const PatientManagement = () => {
 
                             {/* ANC Checkbox */}
                             <div className="mb-6">
-                                <label className={`flex items-center gap-3 p-4 rounded-lg border-2 cursor-pointer transition-all ${
-                                    isANC ? 'bg-pink-50 border-pink-400' : 'bg-gray-50 border-gray-200 hover:border-pink-300'
-                                }`}>
+                                <label className={`flex items-center gap-3 p-4 rounded-lg border-2 cursor-pointer transition-all ${isANC ? 'bg-pink-50 border-pink-400' : 'bg-gray-50 border-gray-200 hover:border-pink-300'
+                                    }`}>
                                     <input
                                         type="checkbox"
                                         checked={isANC}
