@@ -138,7 +138,8 @@ const FrontDeskDashboard = () => {
         if (searchTerm) {
             const filtered = patients.filter(p =>
                 p.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                (p.mrn && p.mrn.toLowerCase().includes(searchTerm.toLowerCase()))
+                (p.mrn && p.mrn.toLowerCase().includes(searchTerm.toLowerCase())) ||
+                (p.contact && p.contact.includes(searchTerm))
             );
             setFilteredPatients(filtered);
         } else {
@@ -746,7 +747,7 @@ const FrontDeskDashboard = () => {
                     <FaSearch className="absolute left-3 top-3 text-gray-400" />
                     <input
                         type="text"
-                        placeholder="Search patient by name or MRN..."
+                        placeholder="Search patient by name, MRN or Phone..."
                         className="w-full pl-10 p-2 border rounded"
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
@@ -1329,8 +1330,8 @@ const FrontDeskDashboard = () => {
                                                         <label
                                                             key={charge._id}
                                                             className={`flex items-center justify-between p-3 rounded border cursor-pointer transition-colors ${isSelected
-                                                                    ? 'bg-green-50 border-green-400'
-                                                                    : 'bg-white border-gray-200 hover:bg-gray-50'
+                                                                ? 'bg-green-50 border-green-400'
+                                                                : 'bg-white border-gray-200 hover:bg-gray-50'
                                                                 }`}
                                                         >
                                                             <div className="flex items-center gap-3">
@@ -1395,8 +1396,8 @@ const FrontDeskDashboard = () => {
                                     onClick={handleSubmitAdditionalCharges}
                                     disabled={selectedAdditionalCharges.length === 0}
                                     className={`px-6 py-2 rounded text-white font-semibold flex items-center gap-2 ${selectedAdditionalCharges.length === 0
-                                            ? 'bg-green-300 cursor-not-allowed'
-                                            : 'bg-green-600 hover:bg-green-700'
+                                        ? 'bg-green-300 cursor-not-allowed'
+                                        : 'bg-green-600 hover:bg-green-700'
                                         }`}
                                 >
                                     <FaDollarSign /> Add to Encounter

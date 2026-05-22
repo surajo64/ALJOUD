@@ -99,7 +99,8 @@ const CashierDashboard = () => {
             const { data } = await axios.get(`${backendUrl}/api/patients`, config);
             const filtered = data.filter(p =>
                 p.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                (p.mrn && p.mrn.toLowerCase().includes(searchTerm.toLowerCase()))
+                (p.mrn && p.mrn.toLowerCase().includes(searchTerm.toLowerCase())) ||
+                (p.contact && p.contact.includes(searchTerm))
             );
             setPatients(filtered);
         } catch (error) {
@@ -516,7 +517,7 @@ const CashierDashboard = () => {
                     <div className="flex gap-2 mb-4">
                         <input
                             type="text"
-                            placeholder="Search by Name or MRN..."
+                            placeholder="Search by Name, MRN or Phone Number..."
                             className="flex-1 border p-2 rounded"
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}

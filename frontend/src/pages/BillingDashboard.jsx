@@ -963,7 +963,7 @@ const BillingDashboard = () => {
                                             <label className="block text-gray-700 mb-2">Search Patient</label>
                                             <input
                                                 type="text"
-                                                placeholder="Name or MRN..."
+                                                placeholder="Name, MRN or Phone..."
                                                 className="w-full border p-2 rounded"
                                                 value={depositSearchTerm}
                                                 onChange={(e) => setDepositSearchTerm(e.target.value)}
@@ -975,7 +975,8 @@ const BillingDashboard = () => {
                                                 .filter(p =>
                                                     !depositSearchTerm ||
                                                     p.name.toLowerCase().includes(depositSearchTerm.toLowerCase()) ||
-                                                    (p.mrn && p.mrn.toLowerCase().includes(depositSearchTerm.toLowerCase()))
+                                                    (p.mrn && p.mrn.toLowerCase().includes(depositSearchTerm.toLowerCase())) ||
+                                                    (p.contact && p.contact.includes(depositSearchTerm))
                                                 )
                                                 .slice(0, 10)
                                                 .map(p => (
@@ -1102,7 +1103,7 @@ const BillingDashboard = () => {
                                 </h3>
                                 <input
                                     type="text"
-                                    placeholder="Search by name or MRN..."
+                                    placeholder="Search by Name, MRN or Phone..."
                                     className="w-full border p-2 rounded mb-4"
                                     value={patientSearchTerm}
                                     onChange={(e) => setPatientSearchTerm(e.target.value)}
@@ -1111,7 +1112,8 @@ const BillingDashboard = () => {
                                     {patients
                                         .filter(p =>
                                             p.name.toLowerCase().includes(patientSearchTerm.toLowerCase()) ||
-                                            (p.mrn && p.mrn.toLowerCase().includes(patientSearchTerm.toLowerCase()))
+                                            (p.mrn && p.mrn.toLowerCase().includes(patientSearchTerm.toLowerCase())) ||
+                                            (p.contact && p.contact.includes(patientSearchTerm))
                                         )
                                         .slice(0, 10)
                                         .map(patient => (
@@ -1131,7 +1133,8 @@ const BillingDashboard = () => {
                                         ))}
                                     {patients.filter(p =>
                                         p.name.toLowerCase().includes(patientSearchTerm.toLowerCase()) ||
-                                        (p.mrn && p.mrn.toLowerCase().includes(patientSearchTerm.toLowerCase()))
+                                        (p.mrn && p.mrn.toLowerCase().includes(patientSearchTerm.toLowerCase())) ||
+                                        (p.contact && p.contact.includes(patientSearchTerm))
                                     ).length === 0 && (
                                             <p className="text-gray-500 text-center py-4">No patients found</p>
                                         )}
