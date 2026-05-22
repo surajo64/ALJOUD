@@ -145,7 +145,45 @@ const getHMOStatement = async (req, res) => {
     }
 };
 
+// @desc    Get Total Retainership HMO Balance
+// @route   GET /api/hmo-transactions/total-retainership-balance
+// @access  Private
+const getTotalRetainershipBalance = async (req, res) => {
+    try {
+        // 1. Get all Retainership HMOs
+        const retainershipHMOs = await HMO.find({ category: 'Retainership', active: true });
+        const hmoIds = retainershipHMOs.map(h => h._id);
+        const hmoNames = retainershipHMOs.map(h => h.name);
+
+        // 2. Sum deposits for these HMOs
+        const deposits = await HMOTransaction.find({ hmo: { $in: hmoIds }, type: 'deposit' });
+        const totalDeposits = deposits.reduce((sum, d) => sum + d.amount, 0);
+
+        // 3. Sum utilized charges for patients belonging to these HMOs
+        const patients = await Patient.find({ hmo: { $in: hmoNames } }).select('_id');
+        const patientIds = patients.map(p => p._id);
+
+        const charges = await EncounterCharge.find({
+            patient: { $in: patientIds },
+            hmoPortion: { $gt: 0 }
+        });
+        const totalCharges = charges.reduce((sum, c) => sum + c.hmoPortion, 0);
+
+        const balance = totalDeposits - totalCharges;
+
+        res.json({
+            totalDeposits,
+            totalCharges,
+            balance
+        });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: error.message });
+    }
+};
+
 module.exports = {
     addDeposit,
-    getHMOStatement
+    getHMOStatement,
+    getTotalRetainershipBalance
 };

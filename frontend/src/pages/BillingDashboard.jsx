@@ -52,6 +52,8 @@ const BillingDashboard = () => {
     const [patientStatementStartDate, setPatientStatementStartDate] = useState('');
     const [patientStatementEndDate, setPatientStatementEndDate] = useState('');
 
+    const [totalRetainershipBalance, setTotalRetainershipBalance] = useState(0);
+
     const { user } = useContext(AuthContext);
     const { backendUrl } = useContext(AppContext);
 
@@ -97,10 +99,21 @@ const BillingDashboard = () => {
             const config = { headers: { Authorization: `Bearer ${user.token}` } };
             const { data } = await axios.get(`${backendUrl}/api/patients`, config);
             setPatients(data);
+            fetchTotalRetainershipBalance();
         } catch (error) {
             console.error(error);
         } finally {
             setLoading(false);
+        }
+    };
+
+    const fetchTotalRetainershipBalance = async () => {
+        try {
+            const config = { headers: { Authorization: `Bearer ${user.token}` } };
+            const { data } = await axios.get(`${backendUrl}/api/hmo-transactions/total-retainership-balance`, config);
+            setTotalRetainershipBalance(data.balance || 0);
+        } catch (error) {
+            console.error('Error fetching total retainership balance:', error);
         }
     };
 
@@ -193,6 +206,7 @@ const BillingDashboard = () => {
 
             // Refresh statement
             fetchHMOStatement(selectedHMO._id);
+            fetchTotalRetainershipBalance();
         } catch (error) {
             console.error(error);
             toast.error(error.response?.data?.message || 'Error adding deposit');
@@ -803,6 +817,8 @@ const BillingDashboard = () => {
 
     const totalReceiptsToday = receipts.filter(r => new Date(r.createdAt).toDateString() === new Date().toDateString()).length;
 
+    const totalPatientDeposits = patients.reduce((sum, p) => sum + (p.depositBalance || 0), 0);
+
     return (
         <Layout>
             {loading && <LoadingOverlay />}
@@ -854,7 +870,7 @@ const BillingDashboard = () => {
             {activeTab === 'invoices' ? (
                 <>
                     {/* Summary Cards */}
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+                    <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
                         <div className="bg-green-50 p-6 rounded shadow">
                             <p className="text-green-700 text-sm font-semibold">Collected Today</p>
                             <p className="text-3xl font-bold text-green-800">₦{totalCollectedToday.toLocaleString()}</p>
@@ -867,6 +883,14 @@ const BillingDashboard = () => {
                         <div className="bg-blue-50 p-6 rounded shadow">
                             <p className="text-blue-700 text-sm font-semibold">Total Receipts Today</p>
                             <p className="text-3xl font-bold text-blue-800">{totalReceiptsToday}</p>
+                        </div>
+                        <div className="bg-purple-50 p-6 rounded shadow">
+                            <p className="text-purple-700 text-sm font-semibold">Total Deposit Balance</p>
+                            <p className="text-3xl font-bold text-purple-800">₦{(totalPatientDeposits + totalRetainershipBalance).toLocaleString()}</p>
+                            <div className="flex justify-between text-xs text-purple-600 mt-2 border-t border-purple-200 pt-2">
+                                <span>Patients: ₦{totalPatientDeposits.toLocaleString()}</span>
+                                <span>Retainership: ₦{totalRetainershipBalance.toLocaleString()}</span>
+                            </div>
                         </div>
                     </div>
 
@@ -1191,18 +1215,20 @@ const BillingDashboard = () => {
                                     >
                                         <FaPrint /> Print Statement
                                     </button>
-                                    <button
-                                        onClick={() => {
-                                            setSelectedPatient(viewingPatient._id);
-                                            setShowRefundModal(true);
-                                            setRefundAmount('');
-                                            // Keep viewingPatient for context in the refund modal
-                                        }}
-                                        disabled={(viewingPatient.depositBalance || 0) <= 0}
-                                        className={`flex-1 px-4 py-2 rounded flex items-center justify-center gap-2 ${ (viewingPatient.depositBalance || 0) <= 0 ? 'bg-gray-300 text-gray-500 cursor-not-allowed' : 'bg-orange-600 text-white hover:bg-orange-700' }`}
-                                    >
-                                        <FaUndo /> Refund
-                                    </button>
+                                    {(user?.role === 'admin' || user?.role === 'super_admin') && (
+                                        <button
+                                            onClick={() => {
+                                                setSelectedPatient(viewingPatient._id);
+                                                setShowRefundModal(true);
+                                                setRefundAmount('');
+                                                // Keep viewingPatient for context in the refund modal
+                                            }}
+                                            disabled={(viewingPatient.depositBalance || 0) <= 0}
+                                            className={`flex-1 px-4 py-2 rounded flex items-center justify-center gap-2 ${ (viewingPatient.depositBalance || 0) <= 0 ? 'bg-gray-300 text-gray-500 cursor-not-allowed' : 'bg-orange-600 text-white hover:bg-orange-700' }`}
+                                        >
+                                            <FaUndo /> Refund
+                                        </button>
+                                    )}
                                     <button
                                         onClick={() => {
                                             setSelectedPatient(viewingPatient._id);
