@@ -254,7 +254,7 @@ const CashierDashboard = () => {
 
         const isFamily = !!receipt.familyFile;
         const isHmo = !!receipt.hmo;
-        
+
         let name = 'N/A';
         let idLabel = 'ID';
         let idVal = 'N/A';
@@ -405,13 +405,24 @@ const CashierDashboard = () => {
             setLoading(true);
             const config = { headers: { Authorization: `Bearer ${user.token}` } };
             const { data } = await axios.get(`${backendUrl}/api/hmos`, config);
-            const filtered = data.filter(h => 
+            const filtered = data.filter(h =>
                 h.category === 'Retainership' && (
                     h.name.toLowerCase().includes(retainershipSearchTerm.toLowerCase()) ||
                     (h.code && h.code.toLowerCase().includes(retainershipSearchTerm.toLowerCase()))
                 )
             );
-            setRetainerships(filtered);
+
+            // Fetch balance for filtered retainerships
+            const enriched = await Promise.all(filtered.map(async (hmo) => {
+                try {
+                    const balanceRes = await axios.get(`${backendUrl}/api/hmo-transactions/statement/${hmo._id}`, config);
+                    return { ...hmo, balance: balanceRes.data.summary.balance };
+                } catch (err) {
+                    return { ...hmo, balance: 0 };
+                }
+            }));
+
+            setRetainerships(enriched);
         } catch (error) {
             console.error(error);
             toast.error('Error searching retainerships');
@@ -469,19 +480,28 @@ const CashierDashboard = () => {
             {/* Tabs */}
             <div className="flex border-b mb-6 overflow-x-auto">
                 <button
-                    onClick={() => setActiveTab('patient')}
+                    onClick={() => {
+                        setActiveTab('patient');
+                        setPaymentMethod('cash');
+                    }}
                     className={`px-6 py-2 font-bold whitespace-nowrap ${activeTab === 'patient' ? 'border-b-4 border-blue-600 text-blue-600' : 'text-gray-500 hover:text-gray-700'}`}
                 >
                     Patient Billing
                 </button>
                 <button
-                    onClick={() => setActiveTab('family')}
+                    onClick={() => {
+                        setActiveTab('family');
+                        setPaymentMethod('cash');
+                    }}
                     className={`px-6 py-2 font-bold whitespace-nowrap ${activeTab === 'family' ? 'border-b-4 border-blue-600 text-blue-600' : 'text-gray-500 hover:text-gray-700'}`}
                 >
                     Family File Registration
                 </button>
                 <button
-                    onClick={() => setActiveTab('retainership')}
+                    onClick={() => {
+                        setActiveTab('retainership');
+                        setPaymentMethod('deposit'); // Default for retainership
+                    }}
                     className={`px-6 py-2 font-bold whitespace-nowrap ${activeTab === 'retainership' ? 'border-b-4 border-blue-600 text-blue-600' : 'text-gray-500 hover:text-gray-700'}`}
                 >
                     Retainership Registration
@@ -826,12 +846,20 @@ const CashierDashboard = () => {
                                 <div className="bg-gray-50 p-6 rounded border border-dashed border-gray-300">
                                     <h4 className="font-bold mb-4 flex items-center gap-2"><FaDollarSign className="text-green-600" /> Collect Retainership Payment</h4>
                                     <div className="mb-6 max-w-sm">
+                                        <label className="block text-gray-700 text-sm font-semibold mb-1 mr-2 text-purple-700 font-bold">HMO Balance:</label>
+                                        <span className={`text-xl font-bold ${selectedRetainership.balance >= (selectedRetainership.registrationCharge || 0) ? 'text-green-600' : 'text-red-600'}`}>
+                                            ₦{(selectedRetainership.balance || 0).toLocaleString()}
+                                        </span>
+                                    </div>
+                                    <div className="mb-6 max-w-sm">
                                         <label className="block text-gray-700 text-sm font-semibold mb-1">Payment Method</label>
                                         <select value={paymentMethod} onChange={(e) => setPaymentMethod(e.target.value)} className="w-full border p-2 rounded text-sm bg-white">
+                                            <option value="deposit">Deduct from Deposit</option>
                                             <option value="cash">Cash</option>
                                             <option value="card">Card/POS</option>
                                         </select>
                                     </div>
+
                                     <button onClick={handleCollectRetainershipPayment} className="w-full bg-purple-600 text-white py-4 rounded-lg font-bold text-lg hover:bg-purple-700 shadow-lg flex items-center justify-center gap-3">
                                         <FaCheckCircle size={24} /> Collect & Print Receipt (₦{(selectedRetainership.registrationCharge || 0).toLocaleString()})
                                     </button>

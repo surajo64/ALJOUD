@@ -29,6 +29,7 @@ const RegisterPatientModal = ({ isOpen, onClose, onSuccess, userToken }) => {
     const [hmos, setHmos] = useState([]);
     const [familyFiles, setFamilyFiles] = useState([]);
     const [availableLgas, setAvailableLgas] = useState([]);
+    const [retainershipDepositStatus, setRetainershipDepositStatus] = useState([]);
 
     const calculateAge = (dob) => {
         if (!dob) return '';
@@ -88,6 +89,10 @@ const RegisterPatientModal = ({ isOpen, onClose, onSuccess, userToken }) => {
                 ...prev,
                 [name]: type === 'checkbox' ? checked : value
             }));
+            // Reset hmo selection whenever provider changes
+            if (name === 'provider') {
+                setFormData(prev => ({ ...prev, provider: value, hmo: '', insuranceNumber: '' }));
+            }
         }
     };
 
@@ -103,8 +108,12 @@ const RegisterPatientModal = ({ isOpen, onClose, onSuccess, userToken }) => {
         if (!userToken) return;
         try {
             const config = { headers: { Authorization: `Bearer ${userToken}` } };
-            const { data } = await axios.get(`${backendUrl}/api/hmos?active=true`, config);
-            setHmos(data);
+            const [hmosRes, depositStatusRes] = await Promise.all([
+                axios.get(`${backendUrl}/api/hmos?active=true`, config),
+                axios.get(`${backendUrl}/api/hmo-transactions/retainership-deposit-status`, config)
+            ]);
+            setHmos(hmosRes.data);
+            setRetainershipDepositStatus(depositStatusRes.data);
         } catch (error) {
             console.error('Error fetching HMOs:', error);
         }
@@ -138,6 +147,15 @@ const RegisterPatientModal = ({ isOpen, onClose, onSuccess, userToken }) => {
         if ((formData.provider === 'Retainership' || formData.provider === 'NHIA' || formData.provider === 'KSCHMA') && !formData.hmo) {
             toast.error('HMO is required for Retainership, NHIA and KSCHMA providers');
             return;
+        }
+
+        // Validate that the selected Retainership HMO has made an initial deposit
+        if (formData.provider === 'Retainership' && formData.hmo) {
+            const depositInfo = retainershipDepositStatus.find(s => s.name === formData.hmo);
+            if (depositInfo && !depositInfo.hasDeposit) {
+                toast.error(`"${formData.hmo}" has not made an initial deposit. Please record a deposit first before assigning patients.`);
+                return;
+            }
         }
 
         // Validate Family File if checked
@@ -448,11 +466,23 @@ const RegisterPatientModal = ({ isOpen, onClose, onSuccess, userToken }) => {
                                                     }
                                                     return true;
                                                 })
-                                                .map(hmo => (
-                                                    <option key={hmo._id} value={hmo.name}>
-                                                        {hmo.name}
-                                                    </option>
-                                                ))}
+                                                .map(hmo => {
+                                                    // For Retainership, check if deposit has been made
+                                                    const depositInfo = formData.provider === 'Retainership'
+                                                        ? retainershipDepositStatus.find(s => s.name === hmo.name)
+                                                        : null;
+                                                    const noDeposit = depositInfo && !depositInfo.hasDeposit;
+                                                    return (
+                                                        <option
+                                                            key={hmo._id}
+                                                            value={hmo.name}
+                                                            disabled={noDeposit}
+                                                            style={noDeposit ? { color: '#9ca3af' } : {}}
+                                                        >
+                                                            {hmo.name}{noDeposit ? ' — No deposit yet' : ''}
+                                                        </option>
+                                                    );
+                                                })}
                                         </select>
                                     </div>
                                 )}
