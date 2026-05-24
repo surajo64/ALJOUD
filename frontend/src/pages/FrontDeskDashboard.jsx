@@ -987,12 +987,10 @@ const FrontDeskDashboard = () => {
                                     onChange={(e) => setEncounterType(e.target.value)}
                                 >
                                     <option value="Outpatient">Outpatient</option>
+                                    <option value="Follow-up">Follow-up</option>
                                     <option value="Inpatient">Inpatient</option>
                                     <option value="Emergency">Emergency</option>
-                                    <option value="Follow-up">Follow-up</option>
                                     <option value="External Lab/Radiology">External Lab/Radiology</option>
-                                    <option value="External Pharmacy">External Pharmacy</option>
-                                    <option value="Consultation">Consultation</option>
                                 </select>
                             </div>
 
