@@ -990,7 +990,6 @@ const FrontDeskDashboard = () => {
                                     <option value="Follow-up">Follow-up</option>
                                     <option value="Inpatient">Inpatient</option>
                                     <option value="Emergency">Emergency</option>
-                                    <option value="External Lab/Radiology">External Lab/Radiology</option>
                                 </select>
                             </div>
 

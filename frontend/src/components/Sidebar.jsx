@@ -187,6 +187,9 @@ const Sidebar = () => {
                         <Link to="/lab" className={`flex items-center gap-3 p-3 rounded hover:bg-green-700 transition ${isActive('/lab')}`}>
                             <FaFlask /> Lab Orders
                         </Link>
+                        <Link to="/lab/pos" className={`flex items-center gap-3 p-3 rounded hover:bg-green-700 transition ${isActive('/lab/pos')}`}>
+                            <FaCashRegister /> External Investigations
+                        </Link>
                         <Link to="/lab/external-investigations" className={`flex items-center gap-3 p-3 rounded hover:bg-green-700 transition ${isActive('/lab/external-investigations')}`}>
                             <FaFlask /> External Investigations
                         </Link>
@@ -202,6 +205,9 @@ const Sidebar = () => {
                         <Link to="/lab" className={`flex items-center gap-3 p-3 rounded hover:bg-green-700 transition ${isActive('/lab')}`}>
                             <FaFlask /> Lab Orders
                         </Link>
+                        <Link to="/lab/pos" className={`flex items-center gap-3 p-3 rounded hover:bg-green-700 transition ${isActive('/lab/pos')}`}>
+                            <FaCashRegister /> External Investigations
+                        </Link>
                         <Link to="/lab/external-investigations" className={`flex items-center gap-3 p-3 rounded hover:bg-green-700 transition ${isActive('/lab/external-investigations')}`}>
                             <FaFlask /> External Investigations
                         </Link>
@@ -215,6 +221,9 @@ const Sidebar = () => {
                     <>
                         <Link to="/radiology" className={`flex items-center gap-3 p-3 rounded hover:bg-green-700 transition ${isActive('/radiology')}`}>
                             <FaXRay /> Radiology Orders
+                        </Link>
+                        <Link to="/radiology/pos" className={`flex items-center gap-3 p-3 rounded hover:bg-green-700 transition ${isActive('/radiology/pos')}`}>
+                            <FaCashRegister />External Radiology
                         </Link>
                         <Link to="/radiology/external-investigations" className={`flex items-center gap-3 p-3 rounded hover:bg-green-700 transition ${isActive('/radiology/external-investigations')}`}>
                             <FaXRay /> External Radiology

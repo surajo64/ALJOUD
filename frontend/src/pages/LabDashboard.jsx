@@ -326,10 +326,12 @@ const LabDashboard = () => {
                         <div>
                             <p><strong>Patient Name:</strong> ${order.patient?.name}</p>
                             <p><strong>MRN:</strong> ${order.patient?.mrn}</p>
+                            <p><strong>Age:</strong> ${order.patient?.age || 'N/A'}</p>
                         </div>
                         <div>
                             <p><strong>Test Name:</strong> ${order.testName}</p>
                             <p><strong>Date Ordered:</strong> ${new Date(order.createdAt).toLocaleDateString()}</p>
+                            <p><strong>Gender:</strong> ${order.patient?.gender || 'N/A'}</p>
                         </div>
                     </div>
 
@@ -1030,10 +1032,12 @@ const LabDashboard = () => {
                                 <div>
                                     <p><strong>Patient Name:</strong> {viewResultModal.patient?.name}</p>
                                     <p><strong>MRN:</strong> {viewResultModal.patient?.mrn}</p>
+                                    <p><strong>Age:</strong> {viewResultModal.patient?.age || 'N/A'}</p>
                                 </div>
                                 <div>
                                     <p><strong>Test Name:</strong> {viewResultModal.testName}</p>
                                     <p><strong>Date Ordered:</strong> {new Date(viewResultModal.createdAt).toLocaleDateString()}</p>
+                                    <p><strong>Gender:</strong> {viewResultModal.patient?.gender || 'N/A'}</p>
                                 </div>
                             </div>
 

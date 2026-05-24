@@ -1,6 +1,6 @@
 const mongoose = require('mongoose');
 
-const encounterTypes = ['Outpatient', 'Inpatient', 'Emergency', 'Follow-up', 'Consultation', 'External Investigation', 'External Lab/Radiology', 'External Pharmacy'];
+const encounterTypes = ['Outpatient', 'Inpatient', 'Emergency', 'Follow-up', 'Consultation', 'External Investigation', 'External Lab', 'External Radiology', 'External Pharmacy'];
 
 const visitSchema = mongoose.Schema({
     patient: { type: mongoose.Schema.Types.ObjectId, ref: 'Patient', required: true },
