@@ -20,8 +20,8 @@ const upload = multer({
     }
 });
 
-router.route('/').post(protect, createCharge).get(protect, getCharges);
-router.post('/import-excel', protect, upload.single('file'), importChargesFromExcel);
-router.route('/:id').put(protect, updateCharge).delete(protect, deactivateCharge);
+router.route('/').post(protect, checkNotReadOnly, createCharge).get(protect, getCharges);
+router.post('/import-excel', protect, checkNotReadOnly, upload.single('file'), importChargesFromExcel);
+router.route('/:id').put(protect, checkNotReadOnly, updateCharge).delete(protect, checkNotReadOnly, deactivateCharge);
 
 module.exports = router;

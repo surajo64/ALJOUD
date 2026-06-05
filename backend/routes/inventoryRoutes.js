@@ -33,12 +33,12 @@ router.get("/reports/profit-loss", protect, getProfitLossReport);
 
 router.route("/")
     .get(protect, getInventory)
-    .post(protect, addInventoryItem);
+    .post(protect, checkNotReadOnly, addInventoryItem);
 
-router.post('/import-excel', protect, upload.single('file'), importInventoryFromExcel);
+router.post('/import-excel', protect, checkNotReadOnly, upload.single('file'), importInventoryFromExcel);
 
 router.route("/:id")
-    .put(protect, updateInventoryItem)
-    .delete(protect, deleteInventoryItem);
+    .put(protect, checkNotReadOnly, updateInventoryItem)
+    .delete(protect, checkNotReadOnly, deleteInventoryItem);
 
 module.exports = router;

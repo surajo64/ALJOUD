@@ -67,7 +67,7 @@ const PatientManagement = () => {
     }, [pendingEncounterPatient, showRegisterPatientModal]);
 
     useEffect(() => {
-        if (user && (user.role === 'admin' || user.role === 'super_admin' || user.role === 'receptionist')) {
+        if (user && (user.role === 'admin' || user.role === 'super_admin' || user.role === 'receptionist' || user.role === 'readonly_admin')) {
             fetchPatients();
             fetchHMOs();
             fetchFamilyFiles();
@@ -406,7 +406,7 @@ const PatientManagement = () => {
         toast.success('Patient list exported successfully!');
     };
 
-    if (user?.role !== 'admin' && user?.role !== 'super_admin' && user?.role !== 'receptionist') {
+    if (user?.role !== 'admin' && user?.role !== 'super_admin' && user?.role !== 'receptionist' && user?.role !== 'readonly_admin') {
         return (
             <Layout>
                 <div className="bg-red-50 border border-red-200 p-6 rounded">
@@ -504,12 +504,14 @@ const PatientManagement = () => {
                         )}
                     </div>
                     <div className="mt-4 flex gap-2">
-                        <button
-                            onClick={() => setShowRegisterPatientModal(true)}
-                            className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 flex items-center gap-2"
-                        >
-                            <FaUserInjured /> Register Patient
-                        </button>
+                        {user.role !== 'readonly_admin' && (
+                            <button
+                                onClick={() => setShowRegisterPatientModal(true)}
+                                className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 flex items-center gap-2"
+                            >
+                                <FaUserInjured /> Register Patient
+                            </button>
+                        )}
                         <button
                             onClick={exportToExcel}
                             className="bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700 flex items-center gap-2"
@@ -618,20 +620,22 @@ const PatientManagement = () => {
                                                 >
                                                     <FaHospital />
                                                 </button>
-                                                <button
-                                                    onClick={() => {
-                                                        setEditPatient({
-                                                            ...patient,
-                                                            isFamilyMember: !!patient.familyFile,
-                                                            familyFileId: typeof patient.familyFile === 'object' ? patient.familyFile?._id : (patient.familyFile || '')
-                                                        });
-                                                        setShowEditPatientModal(true);
-                                                    }}
-                                                    className="text-green-600 hover:text-green-800"
-                                                    title="Edit Patient"
-                                                >
-                                                    <FaEdit />
-                                                </button>
+                                                {user.role !== 'readonly_admin' && (
+                                                    <button
+                                                        onClick={() => {
+                                                            setEditPatient({
+                                                                ...patient,
+                                                                isFamilyMember: !!patient.familyFile,
+                                                                familyFileId: typeof patient.familyFile === 'object' ? patient.familyFile?._id : (patient.familyFile || '')
+                                                            });
+                                                            setShowEditPatientModal(true);
+                                                        }}
+                                                        className="text-green-600 hover:text-green-800"
+                                                        title="Edit Patient"
+                                                    >
+                                                        <FaEdit />
+                                                    </button>
+                                                )}
                                                 {(user.role === 'admin' || user.role === 'super_admin') && (
                                                     <button
                                                         onClick={() => handleDeletePatient(patient._id)}
@@ -740,9 +744,10 @@ const PatientManagement = () => {
                                             </div>
                                             <div className="flex gap-2 items-center">
                                                 <select
+                                                    disabled={user.role === 'readonly_admin'}
                                                     value={encounter.encounterStatus}
                                                     onChange={(e) => handleUpdateEncounterStatus(encounter._id, e.target.value)}
-                                                    className="border p-1 rounded text-sm"
+                                                    className="border p-1 rounded text-sm disabled:opacity-50 disabled:bg-gray-100"
                                                 >
                                                     <option value="registered">Registered</option>
                                                     <option value="admitted">Admitted</option>
