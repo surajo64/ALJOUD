@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const multer = require('multer');
-const { protect, admin, adminOrReceptionist } = require('../middleware/authMiddleware');
+const { protect, admin, adminOrReceptionist, checkNotReadOnly } = require('../middleware/authMiddleware');
 const {
     getHMOs,
     getHMOById,

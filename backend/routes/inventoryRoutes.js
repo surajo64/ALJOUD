@@ -10,7 +10,7 @@ const {
     getProfitLossReport,
     importInventoryFromExcel
 } = require('../controllers/inventoryController');
-const { protect } = require('../middleware/authMiddleware');
+const { protect, checkNotReadOnly } = require('../middleware/authMiddleware');
 
 // Configure multer for Excel file uploads (memory storage)
 const storage = multer.memoryStorage();
