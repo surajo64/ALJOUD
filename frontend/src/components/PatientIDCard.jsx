@@ -1,5 +1,5 @@
 import React from 'react';
-import { QRCodeSVG } from 'qrcode.react';
+import QRCode from 'react-qr-code';
 
 /**
  * PatientIDCard Component
@@ -93,8 +93,8 @@ const PatientIDCard = ({ patient, settings, side = 'front' }) => {
                         left: '50%',
                         transform: 'translate(-50%, -50%)',
                         opacity: 0.04,
-                        width: '180px',
-                        height: '180px',
+                        width: '220px',
+                        height: '220px',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
@@ -111,8 +111,8 @@ const PatientIDCard = ({ patient, settings, side = 'front' }) => {
                     {/* Header: Logo and Hospital Name */}
                     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }}>
                         <div style={{
-                            width: '40px',
-                            height: '40px',
+                            width: '55px',
+                            height: '55px',
                             backgroundColor: 'white',
                             borderRadius: '50%',
                             padding: '2px',
@@ -228,7 +228,12 @@ const PatientIDCard = ({ patient, settings, side = 'front' }) => {
                     marginBottom: '8px',
                     border: '1px solid #eee'
                 }}>
-                    <QRCodeSVG value={`https://maps.google.com/?q=${settings?.address || 'ALJOUD HOSPITAL'}`} size={64} level="M" />
+                    <QRCode
+                        value="https://maps.app.goo.gl/J71jZXvhUdQANWtbA"
+                        size={64}
+                        level="M"
+                        style={{ height: "auto", maxWidth: "100%", width: "100%" }}
+                    />
                 </div>
 
                 <div style={{ fontSize: '7px', color: '#999', fontStyle: 'italic', letterSpacing: '0.5px' }}>
