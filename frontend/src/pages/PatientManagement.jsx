@@ -11,6 +11,9 @@ import { saveAs } from 'file-saver';
 import LoadingOverlay from '../components/loadingOverlay';
 import RegisterPatientModal from '../components/RegisterPatientModal';
 import { formatAge } from '../utils/patientUtils';
+import { FaIdCard } from 'react-icons/fa';
+import PatientIDCard from '../components/PatientIDCard';
+import useHospitalSettings from '../hooks/useHospitalSettings';
 
 const PatientManagement = () => {
     const [loading, setLoading] = useState(false);
@@ -48,6 +51,67 @@ const PatientManagement = () => {
     const [availableBeds, setAvailableBeds] = useState([]);
     const [selectedWard, setSelectedWard] = useState('');
     const [selectedBed, setSelectedBed] = useState('');
+
+    // Card Modal State
+    const [showCardModal, setShowCardModal] = useState(false);
+    const [cardPatient, setCardPatient] = useState(null);
+    const { settings: hospitalSettings } = useHospitalSettings();
+
+    const handlePrintCard = () => {
+        const frontContent = document.getElementById(`patient-card-front-${cardPatient._id}`);
+        const backContent = document.getElementById(`patient-card-back-${cardPatient._id}`);
+        const printWindow = window.open('', '_blank');
+        printWindow.document.write(`
+            <html>
+                <head>
+                    <title>Patient ID Card - ${cardPatient.name}</title>
+                    <link rel="preconnect" href="https://fonts.googleapis.com">
+                    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+                    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+                    <style>
+                        body { 
+                            margin: 0; 
+                            padding: 20px; 
+                            font-family: 'Inter', sans-serif; 
+                            display: flex; 
+                            flex-direction: column; 
+                            align-items: center; 
+                            gap: 20px; 
+                        }
+                        @media print {
+                            @page { size: auto; margin: 0; }
+                            body { margin: 20px; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+                            .no-print { display: none; }
+                            div[id^="patient-card"] { 
+                                margin-bottom: 20px !important; 
+                                box-shadow: none !important; 
+                                break-inside: avoid; 
+                                border-top: 5px solid #1b4332 !important; 
+                                border-bottom: 5px solid #1b4332 !important;
+                                -webkit-print-color-adjust: exact !important;
+                                print-color-adjust: exact !important;
+                            }
+                        }
+                    </style>
+                </head>
+                <body>
+                    <div style="margin-bottom: 20px;">
+                        ${frontContent.outerHTML}
+                    </div>
+                    <div style="margin-bottom: 20px;">
+                        ${backContent.outerHTML}
+                    </div>
+                    <script>
+                        window.onload = () => {
+                            window.print();
+                            window.onafterprint = () => window.close();
+                        };
+                    </script>
+                </body>
+            </html>
+        `);
+        printWindow.document.close();
+    };
     const [pendingEncounterPatient, setPendingEncounterPatient] = useState(null);
     const [isANC, setIsANC] = useState(false);
 
@@ -645,6 +709,16 @@ const PatientManagement = () => {
                                                         <FaTrash />
                                                     </button>
                                                 )}
+                                                <button
+                                                    onClick={() => {
+                                                        setCardPatient(patient);
+                                                        setShowCardModal(true);
+                                                    }}
+                                                    className="text-orange-600 hover:text-orange-800"
+                                                    title="Generate card"
+                                                >
+                                                    <FaIdCard />
+                                                </button>
                                             </div>
                                         </td>
                                     </tr>
@@ -1334,6 +1408,65 @@ const PatientManagement = () => {
                                     Cancel
                                 </button>
                             </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+            {/* Patient Card Modal */}
+            {showCardModal && cardPatient && (
+                <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-[60] p-4">
+                    <div className="bg-white rounded-xl shadow-2xl overflow-hidden max-w-md w-full relative">
+                        <div className="bg-gradient-to-r from-orange-500 to-red-600 p-4 flex justify-between items-center text-white">
+                            <h3 className="text-xl font-bold flex items-center gap-2">
+                                <FaIdCard /> Patient ID Card
+                            </h3>
+                            <button
+                                onClick={() => {
+                                    setShowCardModal(false);
+                                    setCardPatient(null);
+                                }}
+                                className="hover:bg-white/20 rounded-full p-1 transition-colors"
+                            >
+                                <FaTimes size={24} />
+                            </button>
+                        </div>
+
+                        <div className="p-10 flex flex-col items-center justify-center bg-gray-50 max-h-[85vh] overflow-y-auto w-full pb-16">
+                            <div className="flex flex-col gap-10 items-center w-full mt-10">
+                                <div className="w-full flex flex-col items-center">
+                                    <p className="text-center text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 px-3 py-1 bg-gray-200 rounded-full">Front View</p>
+                                    <div className="bg-white p-2 rounded-xl shadow-lg transform hover:scale-[1.02] transition-transform duration-300">
+                                        <PatientIDCard patient={cardPatient} settings={hospitalSettings} side="front" />
+                                    </div>
+                                </div>
+                                <div className="w-full flex flex-col items-center mt-4">
+                                    <p className="text-center text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 px-3 py-1 bg-gray-200 rounded-full">Back View</p>
+                                    <div className="bg-white p-2 rounded-xl shadow-lg transform hover:scale-[1.02] transition-transform duration-300">
+                                        <PatientIDCard patient={cardPatient} settings={hospitalSettings} side="back" />
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="w-full flex gap-3 mt-10">
+                                <button
+                                    onClick={handlePrintCard}
+                                    className="flex-1 bg-green-600 text-white font-bold py-3 rounded-lg hover:bg-green-700 transition flex items-center justify-center gap-2"
+                                >
+                                    <FaDownload /> Print ID Card
+                                </button>
+                                <button
+                                    onClick={() => {
+                                        setShowCardModal(false);
+                                        setCardPatient(null);
+                                    }}
+                                    className="flex-1 bg-gray-200 text-gray-800 font-bold py-3 rounded-lg hover:bg-gray-300 transition"
+                                >
+                                    Close
+                                </button>
+                            </div>
+                            <p className="mt-4 text-xs text-gray-500 text-center">
+                                Tip: For best results, print on high-quality PVC cards or heavy cardstock.
+                            </p>
                         </div>
                     </div>
                 </div>
