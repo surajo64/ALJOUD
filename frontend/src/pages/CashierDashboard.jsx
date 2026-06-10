@@ -132,7 +132,7 @@ const CashierDashboard = () => {
             setLoading(true);
             const config = { headers: { Authorization: `Bearer ${user.token}` } };
             const { data } = await axios.get(`${backendUrl}/api/visits`, config);
-            const patientEncounters = data.filter(v => v.patient._id === patient._id || v.patient === patient._id);
+            const patientEncounters = data.filter(v => v.patient && (v.patient._id === patient._id || v.patient === patient._id));
             // Sort encounters by creation date - latest first
             patientEncounters.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
             setEncounters(patientEncounters);
