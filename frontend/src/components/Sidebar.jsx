@@ -155,7 +155,10 @@ const Sidebar = () => {
                             <FaPills /> Prescriptions
                         </Link>
                         <Link to="/pharmacy/pos" className={`flex items-center gap-3 p-3 rounded hover:bg-green-700 transition ${isActive('/pharmacy/pos')}`}>
-                            <FaCashRegister /> External Purchase
+                            <FaCashRegister /> External Pharmacy POS
+                        </Link>
+                        <Link to="/pharmacy/external-investigations" className={`flex items-center gap-3 p-3 rounded hover:bg-green-700 transition ${isActive('/pharmacy/external-investigations')}`}>
+                            <FaPills /> External Pharmacy Orders
                         </Link>
                         <Link to="/pharmacy/inventory" className={`flex items-center gap-3 p-3 rounded hover:bg-green-700 transition ${isActive('/pharmacy/inventory')}`}>
                             <FaPills /> Inventory
@@ -188,10 +191,10 @@ const Sidebar = () => {
                             <FaFlask /> Lab Orders
                         </Link>
                         <Link to="/lab/pos" className={`flex items-center gap-3 p-3 rounded hover:bg-green-700 transition ${isActive('/lab/pos')}`}>
-                            <FaCashRegister /> External Investigations
+                            <FaCashRegister /> Lab Point of Sale
                         </Link>
                         <Link to="/lab/external-investigations" className={`flex items-center gap-3 p-3 rounded hover:bg-green-700 transition ${isActive('/lab/external-investigations')}`}>
-                            <FaFlask /> External Investigations
+                            <FaFlask /> External Test Orders
                         </Link>
                         <Link to="/lab/manage-tests" className={`flex items-center gap-3 p-3 rounded hover:bg-green-700 transition ${isActive('/lab/manage-tests')}`}>
                             <FaFlask /> Manage Lab Tests
@@ -206,10 +209,10 @@ const Sidebar = () => {
                             <FaFlask /> Lab Orders
                         </Link>
                         <Link to="/lab/pos" className={`flex items-center gap-3 p-3 rounded hover:bg-green-700 transition ${isActive('/lab/pos')}`}>
-                            <FaCashRegister /> External Investigations
+                            <FaCashRegister /> Lab Point of Sale
                         </Link>
                         <Link to="/lab/external-investigations" className={`flex items-center gap-3 p-3 rounded hover:bg-green-700 transition ${isActive('/lab/external-investigations')}`}>
-                            <FaFlask /> External Investigations
+                            <FaFlask /> External Test Orders
                         </Link>
                         <Link to="/lab/manage-tests" className={`flex items-center gap-3 p-3 rounded hover:bg-green-700 transition ${isActive('/lab/manage-tests')}`}>
                             <FaFlask /> Manage Lab Tests
@@ -223,10 +226,10 @@ const Sidebar = () => {
                             <FaXRay /> Radiology Orders
                         </Link>
                         <Link to="/radiology/pos" className={`flex items-center gap-3 p-3 rounded hover:bg-green-700 transition ${isActive('/radiology/pos')}`}>
-                            <FaCashRegister />External Radiology
+                            <FaCashRegister /> Radiology POS
                         </Link>
                         <Link to="/radiology/external-investigations" className={`flex items-center gap-3 p-3 rounded hover:bg-green-700 transition ${isActive('/radiology/external-investigations')}`}>
-                            <FaXRay /> External Radiology
+                            <FaXRay /> External Scan Orders
                         </Link>
                         <Link to="/radiology/manage-tests" className={`flex items-center gap-3 p-3 rounded hover:bg-green-700 transition ${isActive('/radiology/manage-tests')}`}>
                             <FaXRay /> Manage Radiology Tests
