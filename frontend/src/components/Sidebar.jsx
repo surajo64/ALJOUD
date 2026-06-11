@@ -157,9 +157,7 @@ const Sidebar = () => {
                         <Link to="/pharmacy/pos" className={`flex items-center gap-3 p-3 rounded hover:bg-green-700 transition ${isActive('/pharmacy/pos')}`}>
                             <FaCashRegister /> External Pharmacy POS
                         </Link>
-                        <Link to="/pharmacy/external-investigations" className={`flex items-center gap-3 p-3 rounded hover:bg-green-700 transition ${isActive('/pharmacy/external-investigations')}`}>
-                            <FaPills /> External Pharmacy Orders
-                        </Link>
+
                         <Link to="/pharmacy/inventory" className={`flex items-center gap-3 p-3 rounded hover:bg-green-700 transition ${isActive('/pharmacy/inventory')}`}>
                             <FaPills /> Inventory
                         </Link>
@@ -191,10 +189,7 @@ const Sidebar = () => {
                             <FaFlask /> Lab Orders
                         </Link>
                         <Link to="/lab/pos" className={`flex items-center gap-3 p-3 rounded hover:bg-green-700 transition ${isActive('/lab/pos')}`}>
-                            <FaCashRegister /> Lab Point of Sale
-                        </Link>
-                        <Link to="/lab/external-investigations" className={`flex items-center gap-3 p-3 rounded hover:bg-green-700 transition ${isActive('/lab/external-investigations')}`}>
-                            <FaFlask /> External Test Orders
+                            <FaCashRegister />  External Test Orders
                         </Link>
                         <Link to="/lab/manage-tests" className={`flex items-center gap-3 p-3 rounded hover:bg-green-700 transition ${isActive('/lab/manage-tests')}`}>
                             <FaFlask /> Manage Lab Tests
@@ -209,11 +204,9 @@ const Sidebar = () => {
                             <FaFlask /> Lab Orders
                         </Link>
                         <Link to="/lab/pos" className={`flex items-center gap-3 p-3 rounded hover:bg-green-700 transition ${isActive('/lab/pos')}`}>
-                            <FaCashRegister /> Lab Point of Sale
+                            <FaCashRegister /> External Test Orders
                         </Link>
-                        <Link to="/lab/external-investigations" className={`flex items-center gap-3 p-3 rounded hover:bg-green-700 transition ${isActive('/lab/external-investigations')}`}>
-                            <FaFlask /> External Test Orders
-                        </Link>
+
                         <Link to="/lab/manage-tests" className={`flex items-center gap-3 p-3 rounded hover:bg-green-700 transition ${isActive('/lab/manage-tests')}`}>
                             <FaFlask /> Manage Lab Tests
                         </Link>
@@ -226,11 +219,9 @@ const Sidebar = () => {
                             <FaXRay /> Radiology Orders
                         </Link>
                         <Link to="/radiology/pos" className={`flex items-center gap-3 p-3 rounded hover:bg-green-700 transition ${isActive('/radiology/pos')}`}>
-                            <FaCashRegister /> Radiology POS
+                            <FaCashRegister /> External Scan Orders
                         </Link>
-                        <Link to="/radiology/external-investigations" className={`flex items-center gap-3 p-3 rounded hover:bg-green-700 transition ${isActive('/radiology/external-investigations')}`}>
-                            <FaXRay /> External Scan Orders
-                        </Link>
+
                         <Link to="/radiology/manage-tests" className={`flex items-center gap-3 p-3 rounded hover:bg-green-700 transition ${isActive('/radiology/manage-tests')}`}>
                             <FaXRay /> Manage Radiology Tests
                         </Link>
