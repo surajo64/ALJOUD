@@ -389,7 +389,7 @@ const LabDashboard = () => {
                                                             <td style="padding: 10px; border: 1px solid #d1d5db; color: #6b7280;">${param.unit || ''}</td>
                                                             <td style="padding: 10px; border: 1px solid #d1d5db; color: #6b7280;">${param.normalRange || ''}</td>
                                                             <td style="padding: 10px; border: 1px solid #d1d5db; text-align: center;">
-                                                                ${param.value ? `<span style="color: ${statusColor}; font-weight: 600; font-size: 11px;">${statusText}</span>` : ''}
+                                                                ${(param.value && !param.name.toLowerCase().trim().includes('blood group')) ? `<span style="color: ${statusColor}; font-weight: 600; font-size: 11px;">${statusText}</span>` : ''}
                                                             </td>
                                                         </tr>
                                                     `;
@@ -911,7 +911,7 @@ const LabDashboard = () => {
                                                                         }`}>
                                                                         {rangeStatus === 'low' ? '↓ LOW' :
                                                                             rangeStatus === 'high' ? '↑ HIGH' :
-                                                                                '✓ Normal'}
+                                                                                (param.name.toLowerCase().trim().includes('blood group')) ? '' : '✓ Normal'}
                                                                     </span>
                                                                 )}
                                                             </td>
@@ -1085,7 +1085,7 @@ const LabDashboard = () => {
                                                                                     }`}>
                                                                                     {rangeStatus === 'low' ? '↓ LOW' :
                                                                                         rangeStatus === 'high' ? '↑ HIGH' :
-                                                                                            '✓ Normal'}
+                                                                                            (param.name.toLowerCase().trim().includes('blood group')) ? '' : '✓ Normal'}
                                                                                 </span>
                                                                             )}
                                                                         </td>
@@ -1270,7 +1270,7 @@ const LabDashboard = () => {
                                                                     }`}>
                                                                     {rangeStatus === 'low' ? '↓ LOW' :
                                                                         rangeStatus === 'high' ? 'High' :
-                                                                            '✓ Normal'}
+                                                                            (param.name.toLowerCase().trim().includes('blood group')) ? '' : '✓ Normal'}
                                                                 </span>
                                                             )}
                                                         </td>

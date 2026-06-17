@@ -104,7 +104,7 @@ const PatientDetails = () => {
                                                             <td>${p.unit}</td>
                                                             <td style="color: #666;">${p.normalRange}</td>
                                                             <td style="font-weight: bold; color: ${rangeS === 'low' ? '#dd6b20' : rangeS === 'high' ? '#e53e3e' : '#38a169'}">
-                                                                ${rangeS === 'low' ? 'LOW' : rangeS === 'high' ? 'HIGH' : 'NORMAL'}
+                                                                ${(p.name.toLowerCase().trim().includes('blood group')) ? '' : (rangeS === 'low' ? 'LOW' : rangeS === 'high' ? 'HIGH' : 'NORMAL')}
                                                             </td>
                                                         </tr>
                                                     `;
