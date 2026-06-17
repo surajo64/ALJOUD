@@ -165,7 +165,18 @@ const PatientIDCard = ({ patient, settings, side = 'front' }) => {
                             </div>
                             <div style={{ overflow: 'hidden', textAlign: 'right' }}>
                                 <div style={{ fontSize: '6.5px', fontWeight: '700', color: mainBlue, textTransform: 'uppercase', marginBottom: '2px' }}>Category</div>
-                                <div style={{ fontSize: '8.5px', fontWeight: '800', color: '#000', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{patient?.provider || 'Standard'}</div>
+                                <div style={{ fontSize: '8.5px', fontWeight: '800', color: '#000', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }} title={patient?.hmo || (typeof patient?.familyFile === 'object' ? patient.familyFile.familyName : patient?.provider)}>
+                                    {(() => {
+                                        if (patient?.provider === 'Retainership' || patient?.provider === 'NHIA' || patient?.provider === 'KSCHMA') {
+                                            return patient?.hmo || patient?.provider;
+                                        }
+                                        if (patient?.familyFile) {
+                                            const familyName = typeof patient.familyFile === 'object' ? patient.familyFile.familyName : 'Family Linked';
+                                            return familyName;
+                                        }
+                                        return patient?.provider || 'Standard';
+                                    })()}
+                                </div>
                             </div>
                         </div>
                     </div>
