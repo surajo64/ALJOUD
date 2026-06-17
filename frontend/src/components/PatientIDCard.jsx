@@ -165,20 +165,35 @@ const PatientIDCard = ({ patient, settings, side = 'front' }) => {
                             </div>
                             <div style={{ overflow: 'hidden', textAlign: 'right' }}>
                                 <div style={{ fontSize: '6.5px', fontWeight: '700', color: mainBlue, textTransform: 'uppercase', marginBottom: '2px' }}>Category</div>
-                                <div style={{ fontSize: '8.5px', fontWeight: '800', color: '#000', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }} title={patient?.hmo || (typeof patient?.familyFile === 'object' ? patient.familyFile.familyName : patient?.provider)}>
-                                    {(() => {
-                                        if (patient?.provider === 'Retainership' || patient?.provider === 'NHIA' || patient?.provider === 'KSCHMA') {
-                                            return patient?.hmo || patient?.provider;
-                                        }
-                                        if (patient?.familyFile) {
-                                            const familyName = typeof patient.familyFile === 'object' ? patient.familyFile.familyName : 'Family Linked';
-                                            return familyName;
-                                        }
-                                        return patient?.provider || 'Standard';
-                                    })()}
+                                <div style={{ fontSize: '8.5px', fontWeight: '800', color: '#000', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                                    {patient?.provider || 'Standard'}
                                 </div>
                             </div>
                         </div>
+
+                        {/* Specific Entity Info */}
+                        {(patient?.hmo || patient?.familyFile) && (
+                            <div style={{
+                                width: '100%',
+                                textAlign: 'right',
+                                paddingRight: '4px',
+                                marginTop: '4px',
+                                boxSizing: 'border-box'
+                            }}>
+                                <div style={{
+                                    fontSize: '8px',
+                                    fontWeight: '850',
+                                    color: mainBlue,
+                                    textTransform: 'uppercase',
+                                    letterSpacing: '0.2px',
+                                    whiteSpace: 'nowrap',
+                                    overflow: 'hidden',
+                                    textOverflow: 'ellipsis'
+                                }}>
+                                    {patient?.hmo || (typeof patient?.familyFile === 'object' ? patient.familyFile.familyName : 'Family Member')}
+                                </div>
+                            </div>
+                        )}
                     </div>
 
                     {/* Footer — MRN highlighted + label */}
