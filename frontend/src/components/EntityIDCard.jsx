@@ -169,7 +169,7 @@ const EntityIDCard = ({ entity, settings, side = 'front' }) => {
                             {cardTypeLabel}
                         </div>
                         <div style={{ fontSize: '7px', fontWeight: '600', color: '#888' }}>
-                            Issued: {new Date().toLocaleDateString()}
+                            Issued: {entity?.createdAt ? new Date(entity.createdAt).toLocaleDateString() : new Date().toLocaleDateString()}
                         </div>
                     </div>
                 </div>
