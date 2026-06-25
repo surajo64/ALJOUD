@@ -6,7 +6,8 @@
  * @returns {string} - Formatted number string
  */
 export const formatCompactNumber = (num, digits = 2) => {
-    if (!num || isNaN(num)) return '0';
+    if (num === null || num === undefined || isNaN(num)) return '0';
+    if (num === 0) return '0';
 
     // Formatting logic: Million (M), Thousand (K) as requested
     const lookup = [
@@ -25,11 +26,12 @@ export const formatCompactNumber = (num, digits = 2) => {
 };
 
 /**
- * Formats currency in Naira with optional compact formatting
+ * Formats currency in Naira with optional compact formatting starting at a threshold
  */
-export const formatCurrency = (amount, compact = false) => {
-    if (compact) {
-        return `₦${formatCompactNumber(amount)}`;
+export const formatCurrency = (amount, threshold = 100000) => {
+    const num = Number(amount) || 0;
+    if (num >= threshold) {
+        return `₦${formatCompactNumber(num)}`;
     }
-    return `₦${Number(amount).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+    return `₦${num.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 };
