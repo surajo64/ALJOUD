@@ -407,6 +407,49 @@ const PharmacyPrescriptions = () => {
         }
     };
 
+    const handleBulkDispense = async () => {
+        const selectedPrescriptions = patientPrescriptions.filter(p => selectedForPrint.includes(p._id));
+
+        // Filter to only include those that are paid/process and not already dispensed
+        const candidates = selectedPrescriptions.filter(p =>
+            p.status !== 'dispensed' &&
+            (p.medicines?.some(m => m.buyOutside) || (p.charge && p.charge.status === 'paid'))
+        );
+
+        if (candidates.length === 0) {
+            toast.warning('No eligible prescriptions selected for dispensing. Ensure they are paid and not already dispensed.');
+            return;
+        }
+
+        if (!window.confirm(`Are you sure you want to dispense ${candidates.length} eligible prescriptions?`)) return;
+
+        try {
+            setLoading(true);
+            const config = { headers: { Authorization: `Bearer ${user.token}` } };
+            const { data } = await axios.put(
+                `${backendUrl}/api/prescriptions/bulk-dispense`,
+                { prescriptionIds: candidates.map(p => p._id) },
+                config
+            );
+
+            if (data.summary.successCount > 0) {
+                toast.success(`Successfully dispensed ${data.summary.successCount} prescriptions!`);
+            }
+            if (data.summary.failedCount > 0) {
+                toast.error(`Failed to dispense ${data.summary.failedCount} prescriptions. Check console for details.`);
+                console.log('Bulk Dispense Failures:', data.results.failed);
+            }
+
+            setSelectedForPrint([]);
+            fetchPrescriptions();
+        } catch (error) {
+            console.error(error);
+            toast.error(error.response?.data?.message || 'Error during bulk dispense');
+        } finally {
+            setLoading(false);
+        }
+    };
+
     const renderMedicines = (medicines) => {
         if (!Array.isArray(medicines)) return medicines || '';
         return medicines.map((med, idx) => (
@@ -559,12 +602,20 @@ const PharmacyPrescriptions = () => {
                                 {selectedForPrint.length === patientPrescriptions.length ? 'Unselect All' : 'Select All'}
                             </button>
                             {selectedForPrint.length > 0 && (
-                                <button
-                                    onClick={() => handlePrintSelected()}
-                                    className="text-sm bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 flex items-center gap-2"
-                                >
-                                    <FaPrint /> Print Selected ({selectedForPrint.length})
-                                </button>
+                                <div className="flex gap-2">
+                                    <button
+                                        onClick={handleBulkDispense}
+                                        className="text-sm bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 flex items-center gap-2"
+                                    >
+                                        <FaBoxOpen /> Dispense Selected ({selectedForPrint.length})
+                                    </button>
+                                    <button
+                                        onClick={() => handlePrintSelected()}
+                                        className="text-sm bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 flex items-center gap-2"
+                                    >
+                                        <FaPrint /> Print Selected ({selectedForPrint.length})
+                                    </button>
+                                </div>
                             )}
                         </div>
                     </div>
