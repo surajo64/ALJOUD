@@ -81,8 +81,10 @@ const addInventoryItem = async (req, res) => {
         }
     }
 
-    const finalStandardFee = standardFee || price;
-    const finalPrice = price || standardFee;
+    // For backward compatibility, keep price and standardFee in sync
+    // Prioritize standardFee if provided, otherwise use price
+    const finalStandardFee = standardFee ? parseFloat(standardFee) : (price ? parseFloat(price) : 0);
+    const finalPrice = finalStandardFee;
 
     const item = await Inventory.create({
         name,
@@ -128,8 +130,10 @@ const updateInventoryItem = async (req, res) => {
 
     const { name, quantity, price, standardFee, retainershipFee, nhiaFee, kschmaFee, purchasingPrice, expiryDate, supplier, batchNumber, barcode, reorderLevel, route, form, dosage, frequency, drugUnit, pharmacy } = req.body;
 
-    const finalStandardFee = standardFee || price;
-    const finalPrice = price || standardFee;
+    // For backward compatibility, keep price and standardFee in sync
+    // Prioritize standardFee if provided, otherwise use price
+    const finalStandardFee = standardFee ? parseFloat(standardFee) : (price ? parseFloat(price) : 0);
+    const finalPrice = finalStandardFee;
 
     const updatedItem = await Inventory.findByIdAndUpdate(
         req.params.id,
