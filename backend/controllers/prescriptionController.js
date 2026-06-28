@@ -163,14 +163,19 @@ const generatePrescriptionCharge = async (req, res) => {
 
         let basePrice = 0;
         if (drugCharge) {
-            basePrice = drugCharge.basePrice; // or standardFee
+            basePrice = drugCharge.standardFee || drugCharge.basePrice;
         } else if (inventoryItem) {
-            basePrice = inventoryItem.price;
-            // Create Charge definition since it doesn't exist
+            basePrice = inventoryItem.standardFee || inventoryItem.price;
+            // Create Charge definition since it doesn't exist — include ALL fee tiers from inventory
             drugCharge = await Charge.create({
                 name: medicine.name,
                 type: 'drugs',
                 basePrice: basePrice,
+                standardFee: inventoryItem.standardFee || inventoryItem.price || 0,
+                retainershipFee: inventoryItem.retainershipFee || 0,
+                familyRetainershipFee: inventoryItem.familyRetainershipFee || 0,
+                nhiaFee: inventoryItem.nhiaFee || 0,
+                kschmaFee: inventoryItem.kschmaFee || 0,
                 department: 'Pharmacy',
                 active: true
             });
@@ -178,21 +183,32 @@ const generatePrescriptionCharge = async (req, res) => {
             return res.status(400).json({ message: `Drug ${medicine.name} not found in charges or inventory.` });
         }
 
-        // Calculate Fee logic (reusing logic from encounterChargeController.js roughly, or just calling it?)
-        // Better to replicate crucial logic or extract into a service. 
-        // For now, let's implement the core logic here.
-
+        // Calculate Fee logic based on patient provider
         const patient = prescription.patient;
         let fee = 0;
         let isCovered = true;
 
-        if (patient.provider === 'Retainership') fee = drugCharge.retainershipFee || 0;
-        else if (patient.provider === 'NHIA') fee = drugCharge.nhiaFee || 0;
-        else if (patient.provider === 'KSCHMA') fee = drugCharge.kschmaFee || 0;
-        else fee = drugCharge.standardFee || drugCharge.basePrice;
+        if (patient.provider === 'Retainership' || patient.provider === 'Corporate Retainership') {
+            fee = drugCharge.retainershipFee || 0;
+            // Fallback to inventory if charge has no retainershipFee set
+            if (!fee && inventoryItem) fee = inventoryItem.retainershipFee || 0;
+        } else if (patient.provider === 'Family Retainership') {
+            fee = drugCharge.familyRetainershipFee || 0;
+            // Fallback to inventory if charge has no familyRetainershipFee set
+            if (!fee && inventoryItem) fee = inventoryItem.familyRetainershipFee || 0;
+        } else if (patient.provider === 'NHIA') {
+            fee = drugCharge.nhiaFee || 0;
+            if (!fee && inventoryItem) fee = inventoryItem.nhiaFee || 0;
+        } else if (patient.provider === 'KSCHMA') {
+            fee = drugCharge.kschmaFee || 0;
+            if (!fee && inventoryItem) fee = inventoryItem.kschmaFee || 0;
+        } else {
+            fee = drugCharge.standardFee || drugCharge.basePrice || 0;
+        }
 
-        if (fee === 0 && patient.provider !== 'Standard') {
-            fee = drugCharge.standardFee || drugCharge.basePrice;
+        // Final fallback: if specific tier fee is still 0, use standard fee
+        if (fee === 0) {
+            fee = drugCharge.standardFee || drugCharge.basePrice || (inventoryItem ? inventoryItem.standardFee || inventoryItem.price : 0);
         }
 
         const finalQuantity = quantity || medicine.quantity || 1;
@@ -201,7 +217,7 @@ const generatePrescriptionCharge = async (req, res) => {
         let patientPortion = totalAmount;
         let hmoPortion = 0;
 
-        if (patient.provider === 'Retainership') {
+        if (patient.provider === 'Retainership' || patient.provider === 'Corporate Retainership' || patient.provider === 'Family Retainership') {
             patientPortion = 0;
             hmoPortion = totalAmount;
         } else if (patient.provider === 'NHIA' || patient.provider === 'KSCHMA') {

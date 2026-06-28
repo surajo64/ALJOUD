@@ -171,6 +171,7 @@ const PharmacyPrescriptions = () => {
                     fees: inventoryItems.length > 0 ? {
                         standardFee: inventoryItems[0].standardFee,
                         retainershipFee: inventoryItems[0].retainershipFee,
+                        familyRetainershipFee: inventoryItems[0].familyRetainershipFee,
                         nhiaFee: inventoryItems[0].nhiaFee,
                         kschmaFee: inventoryItems[0].kschmaFee,
                         price: inventoryItems[0].price
@@ -495,12 +496,13 @@ const PharmacyPrescriptions = () => {
         if (!fees) return 0;
 
         let fee = 0;
-        if (provider === 'Retainership') fee = fees.retainershipFee || 0;
+        if (provider === 'Retainership' || provider === 'Corporate Retainership') fee = fees.retainershipFee || 0;
+        else if (provider === 'Family Retainership') fee = fees.familyRetainershipFee || 0;
         else if (provider === 'NHIA') fee = fees.nhiaFee || 0;
         else if (provider === 'KSCHMA') fee = fees.kschmaFee || 0;
         else fee = fees.standardFee || fees.price || 0;
 
-        if (fee === 0 && (provider === 'NHIA' || provider === 'KSCHMA' || provider === 'Retainership')) {
+        if (fee === 0 && (provider === 'NHIA' || provider === 'KSCHMA' || provider === 'Retainership' || provider === 'Corporate Retainership' || provider === 'Family Retainership')) {
             fee = fees.standardFee || fees.price || 0;
         }
         return fee;
@@ -510,7 +512,7 @@ const PharmacyPrescriptions = () => {
         let patientPortion = totalAmount;
         let hmoPortion = 0;
 
-        if (provider === 'Retainership') {
+        if (provider === 'Retainership' || provider === 'Corporate Retainership' || provider === 'Family Retainership') {
             patientPortion = 0;
             hmoPortion = totalAmount;
         } else if (provider === 'NHIA' || provider === 'KSCHMA') {

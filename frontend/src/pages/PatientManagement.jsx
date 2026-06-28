@@ -969,7 +969,7 @@ const PatientManagement = () => {
                                                     <option disabled>No families found</option>
                                                 ) : (
                                                     familyFiles.map(file => (
-                                                        <option key={file._id} value={file._id} disabled={file.type === 'Family of 5' && file.memberCount >= 5 && (typeof editPatient.familyFile === 'object' ? editPatient.familyFile?._id : editPatient.familyFile) !== file._id}>
+                                                        <option key={file._id} value={file._id} disabled={file.type === 'Family of 5' && file.memberCount > 5 && (typeof editPatient.familyFile === 'object' ? editPatient.familyFile?._id : editPatient.familyFile) !== file._id}>
                                                             {file.familyName} ({file.fileNumber}) - {file.memberCount}/{file.type === 'Family of 5' ? '5' : '∞'}
                                                         </option>
                                                     ))

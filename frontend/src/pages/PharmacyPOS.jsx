@@ -128,6 +128,7 @@ const PharmacyPOS = () => {
                     drugGroup.price = earliestActive.standardFee || earliestActive.price || 0;
                     drugGroup.standardFee = earliestActive.standardFee;
                     drugGroup.retainershipFee = earliestActive.retainershipFee;
+                    drugGroup.familyRetainershipFee = earliestActive.familyRetainershipFee;
                     drugGroup.nhiaFee = earliestActive.nhiaFee;
                     drugGroup.kschmaFee = earliestActive.kschmaFee;
                 }
@@ -427,7 +428,8 @@ const PharmacyPOS = () => {
                                                 <p className="font-bold text-green-600 text-base">₦{(drug.standardFee || drug.price || 0).toLocaleString()}</p>
                                                 <div className="flex flex-col items-end gap-0.5 mt-0.5">
                                                     <span className="text-[9px] bg-green-100 text-green-700 px-2 py-0.5 rounded-full font-bold uppercase tracking-wider">In Stock</span>
-                                                    {drug.retainershipFee > 0 && <span className="text-[9px] text-purple-500 font-medium tracking-tight">Ret: ₦{drug.retainershipFee.toLocaleString()}</span>}
+                                                    {drug.retainershipFee > 0 && <span className="text-[9px] text-purple-500 font-medium tracking-tight">Corp: ₦{drug.retainershipFee.toLocaleString()}</span>}
+                                                    {drug.familyRetainershipFee > 0 && <span className="text-[9px] text-pink-500 font-medium tracking-tight">Fam: ₦{drug.familyRetainershipFee.toLocaleString()}</span>}
                                                 </div>
                                             </div>
                                         </div>

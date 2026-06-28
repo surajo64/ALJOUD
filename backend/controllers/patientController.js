@@ -19,7 +19,7 @@ const registerPatient = async (req, res) => {
                 return res.status(404).json({ message: 'Family File not found' });
             }
 
-            if (linkedFamilyFile.type === 'Family of 5' && linkedFamilyFile.memberCount >= 5) {
+            if (linkedFamilyFile.type === 'Family of 5' && linkedFamilyFile.memberCount > 5) {
                 return res.status(400).json({ message: 'This Family File has reached its limit of 5 members' });
             }
         }
@@ -143,7 +143,7 @@ const updatePatient = async (req, res) => {
                     return res.status(404).json({ message: 'New Family File not found' });
                 }
 
-                if (newFile.type === 'Family of 5' && newFile.memberCount >= 5) {
+                if (newFile.type === 'Family of 5' && newFile.memberCount > 5) {
                     return res.status(400).json({ message: 'This Family File has reached its limit of 5 members' });
                 }
 

@@ -138,7 +138,7 @@ const RegisterPatient = () => {
                                 >
                                     <option value="">-- Choose Family --</option>
                                     {familyFiles.map(file => (
-                                        <option key={file._id} value={file._id} disabled={file.type === 'Family of 5' && file.memberCount >= 5}>
+                                        <option key={file._id} value={file._id} disabled={file.type === 'Family of 5' && file.memberCount > 5}>
                                             {file.familyName} ({file.fileNumber}) - {file.memberCount}/{file.type === 'Family of 5' ? '5' : '∞'}
                                         </option>
                                     ))}
