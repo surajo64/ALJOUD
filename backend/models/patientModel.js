@@ -22,7 +22,7 @@ const patientSchema = mongoose.Schema({
     insuranceNumber: { type: String },
 
     // Financials
-    depositBalance: { type: Number, default: 0 },
+    depositBalance: { type: Number, default: 0, min: 0 },  // floor at 0 — cannot go negative
     lowDepositThreshold: { type: Number, default: 5000 }, // Alert when below this amount
 
     // Emergency Contact
