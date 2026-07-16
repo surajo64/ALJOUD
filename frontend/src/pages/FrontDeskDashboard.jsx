@@ -1587,6 +1587,10 @@ const FrontDeskDashboard = () => {
                                                         patientFee = charge.familyRetainershipFee || patientFee;
                                                         feeLabel = 'Fam Ret.';
                                                         feeLabelColor = 'bg-pink-100 text-pink-700';
+                                                    } else if (provider === 'Joud Alkhair Retainership') {
+                                                        patientFee = charge.joudAlkhairFee || patientFee;
+                                                        feeLabel = 'Joud Alkhair';
+                                                        feeLabelColor = 'bg-amber-100 text-amber-700';
                                                     } else if (provider === 'NHIA') {
                                                         patientFee = charge.nhiaFee || patientFee;
                                                         feeLabel = 'NHIA';
@@ -1654,6 +1658,7 @@ const FrontDeskDashboard = () => {
                                                     let fee = c.standardFee || c.basePrice || 0;
                                                     if (prov === 'Corporate Retainership' || prov === 'Retainership') fee = c.retainershipFee || fee;
                                                     else if (prov === 'Family Retainership') fee = c.familyRetainershipFee || fee;
+                                                    else if (prov === 'Joud Alkhair Retainership') fee = c.joudAlkhairFee || fee;
                                                     else if (prov === 'NHIA') fee = c.nhiaFee || fee;
                                                     else if (prov === 'KSCHMA') fee = c.kschmaFee || fee;
                                                     return sum + fee;
@@ -1666,6 +1671,7 @@ const FrontDeskDashboard = () => {
                                     </p>
                                 </div>
                             )}
+
                         </div>
 
                         {/* Modal Footer */}
@@ -1784,6 +1790,7 @@ const FrontDeskDashboard = () => {
                                                         let fee = charge.standardFee || charge.basePrice || 0;
                                                         if (addChargesPatient.provider === 'Retainership' || addChargesPatient.provider === 'Corporate Retainership') fee = charge.retainershipFee || fee;
                                                         else if (addChargesPatient.provider === 'Family Retainership') fee = charge.familyRetainershipFee || fee;
+                                                        else if (addChargesPatient.provider === 'Joud Alkhair Retainership') fee = charge.joudAlkhairFee || fee;
                                                         else if (addChargesPatient.provider === 'NHIA') fee = charge.nhiaFee || fee;
                                                         else if (addChargesPatient.provider === 'KSCHMA') fee = charge.kschmaFee || fee;
 
@@ -1858,6 +1865,10 @@ const FrontDeskDashboard = () => {
                                                     fee = charge.familyRetainershipFee || fee;
                                                     addFeeLabel = 'Fam Ret.';
                                                     addFeeLabelColor = 'bg-pink-100 text-pink-700';
+                                                } else if (addChargesPatient.provider === 'Joud Alkhair Retainership') {
+                                                    fee = charge.joudAlkhairFee || fee;
+                                                    addFeeLabel = 'Joud Alkhair';
+                                                    addFeeLabelColor = 'bg-amber-100 text-amber-700';
                                                 } else if (addChargesPatient.provider === 'NHIA') {
                                                     fee = charge.nhiaFee || fee;
                                                     addFeeLabel = 'NHIA';
@@ -1917,6 +1928,7 @@ const FrontDeskDashboard = () => {
                                                     let fee = c.standardFee || c.basePrice || 0;
                                                     if (addChargesPatient.provider === 'Retainership' || addChargesPatient.provider === 'Corporate Retainership') fee = c.retainershipFee || fee;
                                                     else if (addChargesPatient.provider === 'Family Retainership') fee = c.familyRetainershipFee || fee;
+                                                    else if (addChargesPatient.provider === 'Joud Alkhair Retainership') fee = c.joudAlkhairFee || fee;
                                                     else if (addChargesPatient.provider === 'NHIA') fee = c.nhiaFee || fee;
                                                     else if (addChargesPatient.provider === 'KSCHMA') fee = c.kschmaFee || fee;
                                                     return sum + fee;

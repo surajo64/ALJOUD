@@ -633,6 +633,9 @@ const NurseTriage = () => {
         if (provider === 'Family Retainership') {
             return charge.familyRetainershipFee ?? charge.retainershipFee ?? charge.standardFee ?? charge.basePrice ?? 0;
         }
+        if (provider === 'Joud Alkhair Retainership') {
+            return charge.joudAlkhairFee ?? charge.retainershipFee ?? charge.standardFee ?? charge.basePrice ?? 0;
+        }
         if (provider === 'NHIA') {
             return charge.nhiaFee ?? charge.standardFee ?? charge.basePrice ?? 0;
         }
@@ -928,7 +931,7 @@ const NurseTriage = () => {
         }
     };
 
-    const isRetainership = ['Retainership', 'Corporate Retainership', 'Family Retainership'].includes(selectedPatient?.provider);
+    const isRetainership = ['Retainership', 'Corporate Retainership', 'Family Retainership', 'Joud Alkhair Retainership'].includes(selectedPatient?.provider);
     const hasPatientDeposit = (selectedPatient?.depositBalance || 0) > 0;
     const hmoDepositInfo = isRetainership && retainershipDepositStatus.find(s => s.name === selectedPatient?.hmo);
     const hasHmoDeposit = hmoDepositInfo ? hmoDepositInfo.hasDeposit : false;

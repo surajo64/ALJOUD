@@ -41,7 +41,7 @@ const CashierDashboard = () => {
         }
         if (charge.patientPortion > 0) return charge.patientPortion;
         const provider = charge.patient?.provider || selectedPatient?.provider || 'Standard';
-        const isInsurance = ['Retainership', 'Corporate Retainership', 'Family Retainership', 'NHIA', 'KSCHMA'].includes(provider);
+        const isInsurance = ['Retainership', 'Corporate Retainership', 'Family Retainership', 'Joud Alkhair Retainership', 'NHIA', 'KSCHMA'].includes(provider);
         if (isInsurance) {
             if ((provider === 'NHIA' || provider === 'KSCHMA') && charge.itemType === 'Drug') {
                 return charge.totalAmount * 0.1;
@@ -150,7 +150,7 @@ const CashierDashboard = () => {
 
         // Set default payment method based on provider first, then deposit balance
         let initialPaymentMethod = 'cash';
-        if (['Retainership', 'Corporate Retainership', 'Family Retainership'].includes(patient.provider)) {
+        if (['Retainership', 'Corporate Retainership', 'Family Retainership', 'Joud Alkhair Retainership'].includes(patient.provider)) {
             initialPaymentMethod = 'retainership';
         } else if (['NHIA', 'KSCHMA', 'State Scheme'].includes(patient.provider)) {
             initialPaymentMethod = 'insurance';

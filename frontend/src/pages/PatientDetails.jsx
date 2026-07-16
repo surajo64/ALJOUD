@@ -2347,7 +2347,7 @@ const PatientDetails = () => {
         }
     };
 
-    const isRetainership = ['Retainership', 'Corporate Retainership', 'Family Retainership'].includes(patient?.provider);
+    const isRetainership = ['Retainership', 'Corporate Retainership', 'Family Retainership', 'Joud Alkhair Retainership'].includes(patient?.provider);
     const hasPatientDeposit = (patient?.depositBalance || 0) > 0;
     const hmoDepositInfo = isRetainership && retainershipDepositStatus.find(s => s.name === patient?.hmo);
     const hasHmoDeposit = hmoDepositInfo ? hmoDepositInfo.hasDeposit : false;

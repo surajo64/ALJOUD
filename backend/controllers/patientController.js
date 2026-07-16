@@ -230,7 +230,7 @@ const getPatients = async (req, res) => {
             
             // Find unique HMO names of patients that need balance calculation
             const hmoNames = [...new Set(patients
-                .filter(patient => ['Retainership', 'Corporate Retainership', 'Family Retainership'].includes(patient.provider) && patient.hmo)
+                .filter(patient => ['Retainership', 'Corporate Retainership', 'Family Retainership', 'Joud Alkhair Retainership'].includes(patient.provider) && patient.hmo)
                 .map(patient => patient.hmo)
             )];
 
@@ -241,7 +241,7 @@ const getPatients = async (req, res) => {
 
             for (let patient of patients) {
                 let walletBalance = patient.depositBalance || 0;
-                if (['Retainership', 'Corporate Retainership', 'Family Retainership'].includes(patient.provider) && patient.hmo) {
+                if (['Retainership', 'Corporate Retainership', 'Family Retainership', 'Joud Alkhair Retainership'].includes(patient.provider) && patient.hmo) {
                     walletBalance = hmoBalances[patient.hmo] || 0;
                 }
                 const pObj = patient.toObject();
@@ -559,7 +559,7 @@ const getPatientById = async (req, res) => {
             }
 
             let walletBalance = patient.depositBalance || 0;
-            if (['Retainership', 'Corporate Retainership', 'Family Retainership'].includes(patient.provider) && patient.hmo) {
+            if (['Retainership', 'Corporate Retainership', 'Family Retainership', 'Joud Alkhair Retainership'].includes(patient.provider) && patient.hmo) {
                 walletBalance = await getHMOWalletBalance(patient.hmo);
             }
             const pObj = patient.toObject();
