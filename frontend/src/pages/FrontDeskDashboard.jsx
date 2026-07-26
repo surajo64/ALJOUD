@@ -479,7 +479,10 @@ const FrontDeskDashboard = () => {
         setSelectedPatient(patient);
         setSelectedCharges([]);
         setSelectedClinic('');
-        setEncounterType('Outpatient');
+        // Auto-set Follow-up if patient has previous encounters (any time, not just today)
+        const allEncounters = patientEncounters[patient._id] || [];
+        const hasPreviousEncounter = allEncounters.length > 0;
+        setEncounterType(hasPreviousEncounter ? 'Follow-up' : 'Outpatient');
         setIsANC(false);
         setShowEncounterModal(true);
     };
@@ -520,7 +523,7 @@ const FrontDeskDashboard = () => {
             return;
         }
 
-        if (!isANC && !waiveConsultationFee && !['External Investigation', 'External Pharmacy', 'External Lab/Radiology', 'Inpatient'].includes(encounterType) && selectedCharges.length === 0) {
+        if (!isANC && !waiveConsultationFee && !['External Investigation', 'External Pharmacy', 'External Lab/Radiology', 'Inpatient', 'ANC Visit'].includes(encounterType) && selectedCharges.length === 0) {
             toast.error('Please select at least one charge, or check the ANC checkbox to skip charges');
             return;
         }
@@ -569,8 +572,8 @@ const FrontDeskDashboard = () => {
                 return sum + c.basePrice;
             }, 0);
 
-            if (!['External Investigation', 'External Pharmacy', 'External Lab/Radiology', 'Inpatient'].includes(encounterType)) {
-                const newStatus = isANC || waiveConsultationFee ? 'in_nursing' : (totalAmount > 0 ? 'payment_pending' : 'in_nursing');
+            if (!['External Investigation', 'External Pharmacy', 'External Lab/Radiology', 'Inpatient', 'ANC Visit'].includes(encounterType)) {
+                const newStatus = isANC || waiveConsultationFee || encounterType === 'ANC Visit' ? 'in_nursing' : (totalAmount > 0 ? 'payment_pending' : 'in_nursing');
                 await axios.put(
                     `${backendUrl}/api/visits/${visitResponse.data._id}`,
                     { encounterStatus: newStatus, isANC: isANC || undefined },
@@ -596,7 +599,7 @@ const FrontDeskDashboard = () => {
             return;
         }
 
-        if (!isANC && !waiveConsultationFee && !['External Investigation', 'External Pharmacy', 'External Lab/Radiology', 'Inpatient'].includes(encounterType) && selectedCharges.length === 0) {
+        if (!isANC && !waiveConsultationFee && !['External Investigation', 'External Pharmacy', 'External Lab/Radiology', 'Inpatient', 'ANC Visit'].includes(encounterType) && selectedCharges.length === 0) {
             toast.error('Please select at least one charge, or check the ANC checkbox to skip charges');
             return;
         }
@@ -1345,6 +1348,7 @@ const FrontDeskDashboard = () => {
                                 >
                                     <option value="Outpatient">Outpatient</option>
                                     <option value="Follow-up">Follow-up</option>
+                                    <option value="ANC Visit">🤰 ANC Visit</option>
                                     <option value="Inpatient">Inpatient</option>
                                     <option value="Emergency">Emergency</option>
                                 </select>
@@ -1418,6 +1422,20 @@ const FrontDeskDashboard = () => {
                                     </div>
                                 </label>
                             </div>
+
+                            {/* ANC Visit Info Banner */}
+                            {encounterType === 'ANC Visit' && (
+                                <div className="mb-6 bg-pink-50 border border-pink-300 rounded-lg p-4 flex items-start gap-3">
+                                    <span className="text-2xl flex-shrink-0">🤰</span>
+                                    <div>
+                                        <p className="font-bold text-pink-800 text-sm">ANC Visit Selected — No Consultation Fee Required</p>
+                                        <p className="text-xs text-pink-600 mt-1">
+                                            This patient will be routed directly to the nurse for vitals, then to the doctor. 
+                                            The doctor will see a <strong>dedicated ANC Note</strong> form instead of the standard clinic note.
+                                        </p>
+                                    </div>
+                                </div>
+                            )}
 
                             {/* Speciality Restrictions */}
                             <div className="mb-6 bg-blue-50 p-4 rounded-lg border border-blue-200">
@@ -1558,7 +1576,7 @@ const FrontDeskDashboard = () => {
                             )}
 
                             {/* Charges Selection */}
-                            {!isANC && !['External Investigation', 'External Pharmacy', 'External Lab/Radiology', 'Inpatient'].includes(encounterType) && (
+                            {!isANC && !['External Investigation', 'External Pharmacy', 'External Lab/Radiology', 'Inpatient', 'ANC Visit'].includes(encounterType) && (
                                 <div className="mb-6">
                                     <label className="block text-gray-700 font-semibold mb-2">
                                         Select Charges <span className="text-red-500">*</span>
@@ -1587,10 +1605,6 @@ const FrontDeskDashboard = () => {
                                                         patientFee = charge.familyRetainershipFee || patientFee;
                                                         feeLabel = 'Fam Ret.';
                                                         feeLabelColor = 'bg-pink-100 text-pink-700';
-                                                    } else if (provider === 'Joud Alkhair Retainership') {
-                                                        patientFee = charge.joudAlkhairFee || patientFee;
-                                                        feeLabel = 'Joud Alkhair';
-                                                        feeLabelColor = 'bg-amber-100 text-amber-700';
                                                     } else if (provider === 'NHIA') {
                                                         patientFee = charge.nhiaFee || patientFee;
                                                         feeLabel = 'NHIA';
@@ -1658,7 +1672,6 @@ const FrontDeskDashboard = () => {
                                                     let fee = c.standardFee || c.basePrice || 0;
                                                     if (prov === 'Corporate Retainership' || prov === 'Retainership') fee = c.retainershipFee || fee;
                                                     else if (prov === 'Family Retainership') fee = c.familyRetainershipFee || fee;
-                                                    else if (prov === 'Joud Alkhair Retainership') fee = c.joudAlkhairFee || fee;
                                                     else if (prov === 'NHIA') fee = c.nhiaFee || fee;
                                                     else if (prov === 'KSCHMA') fee = c.kschmaFee || fee;
                                                     return sum + fee;
@@ -1671,7 +1684,6 @@ const FrontDeskDashboard = () => {
                                     </p>
                                 </div>
                             )}
-
                         </div>
 
                         {/* Modal Footer */}
@@ -1685,7 +1697,7 @@ const FrontDeskDashboard = () => {
                             <button
                                 onClick={isEditing ? handleUpdateEncounter : handleCreateEncounter}
                                 className="bg-green-600 text-white px-6 py-2 rounded hover:bg-green-700 flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
-                                disabled={loading || (!isANC && !waiveConsultationFee && !['External Investigation', 'External Pharmacy', 'External Lab/Radiology', 'Inpatient'].includes(encounterType) && selectedCharges.length === 0)}
+                                disabled={loading || (!isANC && !waiveConsultationFee && !['External Investigation', 'External Pharmacy', 'External Lab/Radiology', 'Inpatient', 'ANC Visit'].includes(encounterType) && selectedCharges.length === 0)}
                             >
                                 {loading ? (
                                     <>
@@ -1790,7 +1802,6 @@ const FrontDeskDashboard = () => {
                                                         let fee = charge.standardFee || charge.basePrice || 0;
                                                         if (addChargesPatient.provider === 'Retainership' || addChargesPatient.provider === 'Corporate Retainership') fee = charge.retainershipFee || fee;
                                                         else if (addChargesPatient.provider === 'Family Retainership') fee = charge.familyRetainershipFee || fee;
-                                                        else if (addChargesPatient.provider === 'Joud Alkhair Retainership') fee = charge.joudAlkhairFee || fee;
                                                         else if (addChargesPatient.provider === 'NHIA') fee = charge.nhiaFee || fee;
                                                         else if (addChargesPatient.provider === 'KSCHMA') fee = charge.kschmaFee || fee;
 
@@ -1865,10 +1876,6 @@ const FrontDeskDashboard = () => {
                                                     fee = charge.familyRetainershipFee || fee;
                                                     addFeeLabel = 'Fam Ret.';
                                                     addFeeLabelColor = 'bg-pink-100 text-pink-700';
-                                                } else if (addChargesPatient.provider === 'Joud Alkhair Retainership') {
-                                                    fee = charge.joudAlkhairFee || fee;
-                                                    addFeeLabel = 'Joud Alkhair';
-                                                    addFeeLabelColor = 'bg-amber-100 text-amber-700';
                                                 } else if (addChargesPatient.provider === 'NHIA') {
                                                     fee = charge.nhiaFee || fee;
                                                     addFeeLabel = 'NHIA';
@@ -1928,7 +1935,6 @@ const FrontDeskDashboard = () => {
                                                     let fee = c.standardFee || c.basePrice || 0;
                                                     if (addChargesPatient.provider === 'Retainership' || addChargesPatient.provider === 'Corporate Retainership') fee = c.retainershipFee || fee;
                                                     else if (addChargesPatient.provider === 'Family Retainership') fee = c.familyRetainershipFee || fee;
-                                                    else if (addChargesPatient.provider === 'Joud Alkhair Retainership') fee = c.joudAlkhairFee || fee;
                                                     else if (addChargesPatient.provider === 'NHIA') fee = c.nhiaFee || fee;
                                                     else if (addChargesPatient.provider === 'KSCHMA') fee = c.kschmaFee || fee;
                                                     return sum + fee;

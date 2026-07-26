@@ -41,8 +41,6 @@ const addChargeToEncounter = async (req, res) => {
                 fee = ward.rates?.Retainership || ward.dailyRate || 0;
             } else if (provider === 'Family Retainership') {
                 fee = ward.rates?.Retainership || ward.dailyRate || 0;
-            } else if (provider === 'Joud Alkhair Retainership') {
-                fee = ward.rates?.Retainership || ward.dailyRate || 0;
             } else if (provider === 'NHIA') {
                 fee = ward.rates?.NHIA || ward.dailyRate || 0;
             } else if (provider === 'KSCHMA') {
@@ -74,9 +72,6 @@ const addChargeToEncounter = async (req, res) => {
                         break;
                     case 'Family Retainership':
                         fee = chargeDoc.familyRetainershipFee || 0;
-                        break;
-                    case 'Joud Alkhair Retainership':
-                        fee = chargeDoc.joudAlkhairFee || 0;
                         break;
                     case 'NHIA':
                         fee = chargeDoc.nhiaFee;
@@ -122,7 +117,7 @@ const addChargeToEncounter = async (req, res) => {
             // If not covered (fee was 0), patient pays 100%
             patientPortion = totalAmount;
             hmoPortion = 0;
-        } else if (patient.provider === 'Retainership' || patient.provider === 'Corporate Retainership' || patient.provider === 'Family Retainership' || patient.provider === 'Joud Alkhair Retainership') {
+        } else if (patient.provider === 'Retainership' || patient.provider === 'Corporate Retainership' || patient.provider === 'Family Retainership') {
             // Retainership: HMO covers 100% of ALL charges
             patientPortion = 0;
             hmoPortion = totalAmount;
@@ -283,7 +278,7 @@ const updateEncounterCharge = async (req, res) => {
                 let patientPortion = totalAmount;
                 let hmoPortion = 0;
 
-                if (patient.provider === 'Retainership' || patient.provider === 'Corporate Retainership' || patient.provider === 'Family Retainership' || patient.provider === 'Joud Alkhair Retainership') {
+                if (patient.provider === 'Retainership' || patient.provider === 'Corporate Retainership' || patient.provider === 'Family Retainership') {
                     patientPortion = 0;
                     hmoPortion = totalAmount;
                 } else if (patient.provider === 'NHIA' || patient.provider === 'KSCHMA') {

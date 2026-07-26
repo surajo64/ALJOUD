@@ -4,14 +4,13 @@ const chargeSchema = mongoose.Schema({
     name: { type: String, required: true }, // e.g., "Consultation Fee", "CBC", "X-Ray Chest"
     type: {
         type: String,
-        enum: ['consultation', 'lab', 'radiology', 'drugs', 'family', 'nursing', 'labour', 'theatre', 'retainership', 'joud_alkhair', 'other'],
+        enum: ['consultation', 'lab', 'radiology', 'drugs', 'family', 'nursing', 'labour', 'theatre', 'retainership', 'other'],
         required: true
     },
     // Multi-tier pricing
     standardFee: { type: Number, default: 0 },
     retainershipFee: { type: Number, default: 0 },
     familyRetainershipFee: { type: Number, default: 0 },
-    joudAlkhairFee: { type: Number, default: 0 },
     nhiaFee: { type: Number, default: 0 },
     kschmaFee: { type: Number, default: 0 },
     basePrice: { type: Number, required: true }, // Deprecated, kept for backwards compatibility

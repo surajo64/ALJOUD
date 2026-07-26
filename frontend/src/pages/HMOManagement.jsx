@@ -162,7 +162,7 @@ const HMOManagement = () => {
         try {
             const config = { headers: { Authorization: `Bearer ${user.token}` } };
             const { data } = await axios.get(`${backendUrl}/api/charges`, config);
-            const filtered = data.filter(c => (c.type === 'retainership' || c.type === 'joud_alkhair') && c.active);
+            const filtered = data.filter(c => c.type === 'retainership' && c.active);
             setRetainershipCharges(filtered);
         } catch (error) {
             console.error(error);
@@ -494,7 +494,6 @@ const HMOManagement = () => {
                                     <option value="all">All Types</option>
                                     <option value="Family">Family</option>
                                     <option value="Corporate">Corporate</option>
-                                    <option value="Joud Alkhair">Joud Alkhair</option>
                                 </select>
                             </div>
                         )}
@@ -799,7 +798,6 @@ const HMOManagement = () => {
                                                 <option value="">-- Select Type --</option>
                                                 <option value="Family">Family</option>
                                                 <option value="Corporate">Corporate</option>
-                                                <option value="Joud Alkhair">Joud Alkhair</option>
                                             </select>
                                         </div>
                                         <div>
@@ -825,9 +823,8 @@ const HMOManagement = () => {
                                                 <option value="">-- Select a Charge --</option>
                                                 {retainershipCharges
                                                     .filter(charge =>
-                                                         !currentHMO.retainershipType ||
-                                                         charge.name.toLowerCase().includes(currentHMO.retainershipType.toLowerCase()) ||
-                                                         (currentHMO.retainershipType === 'Joud Alkhair' && charge.type === 'joud_alkhair')
+                                                        !currentHMO.retainershipType ||
+                                                        charge.name.toLowerCase().includes(currentHMO.retainershipType.toLowerCase())
                                                     )
                                                     .map(charge => (
                                                         <option key={charge._id} value={charge._id}>

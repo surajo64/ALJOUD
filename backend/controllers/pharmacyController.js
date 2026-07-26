@@ -133,7 +133,7 @@ const processDirectSale = async (req, res) => {
                 return res.status(404).json({ message: 'Selected patient not found.' });
             }
 
-            const isRetainershipProvider = ['Retainership', 'Corporate Retainership', 'Family Retainership', 'Joud Alkhair Retainership'].includes(salePatient.provider);
+            const isRetainershipProvider = ['Retainership', 'Corporate Retainership', 'Family Retainership'].includes(salePatient.provider);
 
             if (isRetainershipProvider && paymentMethod === 'retainership') {
                 const hmoBalance = salePatient.hmo ? await getHMOWalletBalance(salePatient.hmo) : 0;

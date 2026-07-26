@@ -85,7 +85,8 @@ const getPrescriptions = async (req, res) => {
 // @access  Private
 const getPatientPrescriptions = async (req, res) => {
     const prescriptions = await Prescription.find({ patient: req.params.id })
-        .populate('doctor', 'name');
+        .populate('doctor', 'name')
+        .populate('medicines.discontinuedBy', 'name');
     res.json(prescriptions);
 };
 
@@ -97,7 +98,8 @@ const getPrescriptionsByVisit = async (req, res) => {
         .populate('doctor', 'name')
         .populate('patient', 'name age gender mrn provider')
         .populate('charge')
-        .populate('dispensedBy', 'name');
+        .populate('dispensedBy', 'name')
+        .populate('medicines.discontinuedBy', 'name');
     res.json(prescriptions);
 };
 
@@ -181,7 +183,6 @@ const generatePrescriptionCharge = async (req, res) => {
                 standardFee: inventoryItem.standardFee || inventoryItem.price || 0,
                 retainershipFee: inventoryItem.retainershipFee || 0,
                 familyRetainershipFee: inventoryItem.familyRetainershipFee || 0,
-                joudAlkhairFee: inventoryItem.joudAlkhairFee || 0,
                 nhiaFee: inventoryItem.nhiaFee || 0,
                 kschmaFee: inventoryItem.kschmaFee || 0,
                 department: 'Pharmacy',
@@ -205,8 +206,6 @@ const generatePrescriptionCharge = async (req, res) => {
                     fee = inventoryItem.retainershipFee || 0;
                 } else if (patient.provider === 'Family Retainership') {
                     fee = inventoryItem.familyRetainershipFee || 0;
-                } else if (patient.provider === 'Joud Alkhair Retainership') {
-                    fee = inventoryItem.joudAlkhairFee || 0;
                 } else if (patient.provider === 'NHIA') {
                     fee = inventoryItem.nhiaFee || 0;
                 } else if (patient.provider === 'KSCHMA') {
@@ -222,8 +221,6 @@ const generatePrescriptionCharge = async (req, res) => {
                     fee = drugCharge.retainershipFee || 0;
                 } else if (patient.provider === 'Family Retainership') {
                     fee = drugCharge.familyRetainershipFee || 0;
-                } else if (patient.provider === 'Joud Alkhair Retainership') {
-                    fee = drugCharge.joudAlkhairFee || 0;
                 } else if (patient.provider === 'NHIA') {
                     fee = drugCharge.nhiaFee || 0;
                 } else if (patient.provider === 'KSCHMA') {
@@ -245,7 +242,7 @@ const generatePrescriptionCharge = async (req, res) => {
         let patientPortion = totalAmount;
         let hmoPortion = 0;
 
-        if (patient.provider === 'Retainership' || patient.provider === 'Corporate Retainership' || patient.provider === 'Family Retainership' || patient.provider === 'Joud Alkhair Retainership') {
+        if (patient.provider === 'Retainership' || patient.provider === 'Corporate Retainership' || patient.provider === 'Family Retainership') {
             patientPortion = 0;
             hmoPortion = totalAmount;
         } else if (patient.provider === 'NHIA' || patient.provider === 'KSCHMA') {
@@ -644,6 +641,41 @@ const deletePrescription = async (req, res) => {
     res.json({ message: 'Prescription and associated pending charge deleted.' });
 };
 
+// @desc    Toggle discontinue status of a medicine in a prescription
+// @route   PUT /api/prescriptions/:id/medicines/:medIndex/discontinue
+// @access  Private (Doctor/Admin)
+const toggleDiscontinueMedicine = async (req, res) => {
+    try {
+        const { id, medIndex } = req.params;
+        const prescription = await Prescription.findById(id);
+
+        if (!prescription) {
+            return res.status(404).json({ message: 'Prescription not found' });
+        }
+
+        const idx = parseInt(medIndex);
+        if (isNaN(idx) || idx < 0 || idx >= prescription.medicines.length) {
+            return res.status(400).json({ message: 'Invalid medicine index' });
+        }
+
+        const { reason } = req.body || {};
+        const medicine = prescription.medicines[idx];
+        const isDiscontinued = !medicine.isDiscontinued;
+
+        medicine.isDiscontinued = isDiscontinued;
+        medicine.discontinuedBy = isDiscontinued ? req.user._id : null;
+        medicine.discontinuedAt = isDiscontinued ? new Date() : null;
+        medicine.discontinueReason = isDiscontinued ? (reason || 'No reason provided') : '';
+
+        await prescription.save();
+        await prescription.populate('medicines.discontinuedBy', 'name');
+        res.json({ message: `Medicine ${isDiscontinued ? 'discontinued' : 'reactivated'} successfully`, prescription });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: 'Error updating medicine status' });
+    }
+};
+
 module.exports = {
     createPrescription,
     getPrescriptions,
@@ -654,4 +686,5 @@ module.exports = {
     dispenseWithInventory,
     bulkDispenseWithInventory,
     deletePrescription,
+    toggleDiscontinueMedicine,
 };

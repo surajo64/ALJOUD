@@ -75,7 +75,7 @@ const attemptPaymentForCharge = async (charge, visit, userId) => {
                 console.log(`[BedFeeBilling] Insufficient deposit balance for patient ${patient.name} . Required: ${amount}, Balance: ${currentBalance}`);
                 return false; // failed
             }
-        } else if (['Retainership', 'Corporate Retainership', 'Family Retainership', 'Joud Alkhair Retainership'].includes(provider)) {
+        } else if (['Retainership', 'Corporate Retainership', 'Family Retainership'].includes(provider)) {
             // Deduct from HMO Retainership balance
             const hmo = await HMO.findOne({ name: patient.hmo });
             if (hmo) {
@@ -155,7 +155,7 @@ const processBedFeeCharge = async (visit, isInitial, chargeDate, userId) => {
     // Resolve daily fee based on provider using ward rates
     const provider = patient.provider || 'Standard';
     let dailyFee = 0;
-    if (provider === 'Retainership' || provider === 'Corporate Retainership' || provider === 'Family Retainership' || provider === 'Joud Alkhair Retainership') {
+    if (provider === 'Retainership' || provider === 'Corporate Retainership' || provider === 'Family Retainership') {
         dailyFee = ward.rates?.Retainership || ward.dailyRate || 0;
     } else if (provider === 'NHIA') {
         dailyFee = ward.rates?.NHIA || ward.dailyRate || 0;
@@ -173,7 +173,7 @@ const processBedFeeCharge = async (visit, isInitial, chargeDate, userId) => {
     // Determine portions
     let patientPortion = dailyFee;
     let hmoPortion = 0;
-    if (['Retainership', 'Corporate Retainership', 'Family Retainership', 'Joud Alkhair Retainership', 'NHIA', 'KSCHMA'].includes(provider)) {
+    if (['Retainership', 'Corporate Retainership', 'Family Retainership', 'NHIA', 'KSCHMA'].includes(provider)) {
         patientPortion = 0;
         hmoPortion = dailyFee;
     }

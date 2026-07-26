@@ -21,7 +21,6 @@ const RadiologyTestManagement = () => {
         standardFee: '',
         retainershipFee: '',
         familyRetainershipFee: '',
-        joudAlkhairFee: '',
         nhiaFee: '',
         kschmaFee: '',
         description: '',
@@ -73,7 +72,6 @@ const RadiologyTestManagement = () => {
                 standardFee: parseFloat(formData.standardFee),
                 retainershipFee: parseFloat(formData.retainershipFee) || 0,
                 familyRetainershipFee: parseFloat(formData.familyRetainershipFee) || 0,
-                joudAlkhairFee: parseFloat(formData.joudAlkhairFee) || 0,
                 nhiaFee: parseFloat(formData.nhiaFee) || 0,
                 kschmaFee: parseFloat(formData.kschmaFee) || 0,
                 department: 'Radiology',
@@ -111,7 +109,6 @@ const RadiologyTestManagement = () => {
             standardFee: (test.standardFee || test.basePrice || 0).toString(),
             retainershipFee: (test.retainershipFee || 0).toString(),
             familyRetainershipFee: (test.familyRetainershipFee || 0).toString(),
-            joudAlkhairFee: (test.joudAlkhairFee || 0).toString(),
             nhiaFee: (test.nhiaFee || 0).toString(),
             kschmaFee: (test.kschmaFee || 0).toString(),
             description: test.description || '',
@@ -161,7 +158,6 @@ const RadiologyTestManagement = () => {
             standardFee: '',
             retainershipFee: '',
             familyRetainershipFee: '',
-            joudAlkhairFee: '',
             nhiaFee: '',
             kschmaFee: '',
             description: '',
@@ -198,7 +194,6 @@ const RadiologyTestManagement = () => {
             'Standard Fee': t.standardFee || 0,
             'Retainership Fee': t.retainershipFee || 0,
             'Family Retainership Fee': t.familyRetainershipFee || 0,
-            'Joud Alkhair Fee': t.joudAlkhairFee || 0,
             'NHIA Fee': t.nhiaFee || 0,
             'KSCHMA Fee': t.kschmaFee || 0,
             'Status': t.active ? 'Active' : 'Inactive'
@@ -541,19 +536,6 @@ _____________________________________
                                     />
                                 </div>
                                 <div>
-                                    <label className="block text-xs font-semibold mb-1 text-amber-600">Joud Alkhair</label>
-                                    <input
-                                        type="number"
-                                        name="joudAlkhairFee"
-                                        value={formData.joudAlkhairFee}
-                                        onChange={handleInputChange}
-                                        className="w-full border p-2 rounded text-sm border-amber-200 focus:border-amber-500"
-                                        placeholder="0.00"
-                                        step="0.01"
-                                        min="0"
-                                    />
-                                </div>
-                                <div>
                                     <label className="block text-xs font-semibold mb-1 text-green-600">NHIA Fee</label>
                                     <input
                                         type="number"
@@ -737,12 +719,6 @@ _____________________________________"
                                                             <div className="flex justify-between gap-1">
                                                                 <span className="text-pink-600">Fam:</span>
                                                                 <span>₦{test.familyRetainershipFee.toLocaleString()}</span>
-                                                            </div>
-                                                        )}
-                                                        {test.joudAlkhairFee > 0 && (
-                                                            <div className="flex justify-between gap-1">
-                                                                <span className="text-amber-600">Joud:</span>
-                                                                <span>₦{test.joudAlkhairFee.toLocaleString()}</span>
                                                             </div>
                                                         )}
                                                         {test.nhiaFee > 0 && (

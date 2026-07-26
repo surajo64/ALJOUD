@@ -243,9 +243,6 @@ const Sidebar = () => {
                             <Link to="/admin/patients" className={`flex items-center gap-3 p-2 rounded hover:bg-green-600 transition ${isActive('/admin/patients')}`}>
                                 <FaUserInjured size={14} /> Patients
                             </Link>
-                            <Link to="/front-desk" className={`flex items-center gap-3 p-2 rounded hover:bg-green-600 transition ${isActive('/front-desk')}`}>
-                                <FaUserInjured size={14} /> Front Desk
-                            </Link>
                             <Link to="/nurse/triage" className={`flex items-center gap-3 p-2 rounded hover:bg-green-600 transition ${isActive('/nurse/triage')}`}>
                                 <FaUserMd size={14} /> Nursing Triage
                             </Link>
@@ -307,9 +304,6 @@ const Sidebar = () => {
                             </Link>
                             <Link to="/pharmacy/prescriptions" className={`flex items-center gap-3 p-2 rounded hover:bg-green-600 transition ${isActive('/pharmacy/prescriptions')}`}>
                                 <FaPills size={14} /> Pending Prescriptions
-                            </Link>
-                            <Link to="/pharmacy/pos" className={`flex items-center gap-3 p-2 rounded hover:bg-green-600 transition ${isActive('/pharmacy/pos')}`}>
-                                <FaCashRegister size={14} /> External Pharmacy POS
                             </Link>
                             <Link to="/admin/pharmacies" className={`flex items-center gap-3 p-2 rounded hover:bg-green-600 transition ${isActive('/admin/pharmacies')}`}>
                                 <FaHospital size={14} /> Pharmacy Locations

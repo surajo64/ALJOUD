@@ -15,14 +15,14 @@ const patientSchema = mongoose.Schema({
     // Insurance/Provider Details
     provider: {
         type: String,
-        enum: ['Standard', 'Retainership', 'Corporate Retainership', 'Family Retainership', 'Joud Alkhair Retainership', 'NHIA', 'KSCHMA'],
+        enum: ['Standard', 'Retainership', 'Corporate Retainership', 'Family Retainership', 'NHIA', 'KSCHMA'],
         default: 'Standard'
     },
     hmo: { type: String }, // Only for NHIA patients
     insuranceNumber: { type: String },
 
     // Financials
-    depositBalance: { type: Number, default: 0, min: 0 },  // floor at 0 — cannot go negative
+    depositBalance: { type: Number, default: 0 },
     lowDepositThreshold: { type: Number, default: 5000 }, // Alert when below this amount
 
     // Emergency Contact

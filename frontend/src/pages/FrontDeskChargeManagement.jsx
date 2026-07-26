@@ -22,7 +22,6 @@ const FrontDeskChargeManagement = () => {
         standardFee: '',
         retainershipFee: '',
         familyRetainershipFee: '',
-        joudAlkhairFee: '',
         nhiaFee: '',
         kschmaFee: '',
         department: '',
@@ -70,7 +69,6 @@ const FrontDeskChargeManagement = () => {
                 standardFee: parseFloat(formData.standardFee) || 0,
                 retainershipFee: parseFloat(formData.retainershipFee) || 0,
                 familyRetainershipFee: parseFloat(formData.familyRetainershipFee) || 0,
-                joudAlkhairFee: parseFloat(formData.joudAlkhairFee) || 0,
                 nhiaFee: parseFloat(formData.nhiaFee) || 0,
                 kschmaFee: parseFloat(formData.kschmaFee) || 0,
                 department: formData.department || 'General',
@@ -107,7 +105,6 @@ const FrontDeskChargeManagement = () => {
             standardFee: (charge.standardFee || charge.basePrice || 0).toString(),
             retainershipFee: (charge.retainershipFee || 0).toString(),
             familyRetainershipFee: (charge.familyRetainershipFee || 0).toString(),
-            joudAlkhairFee: (charge.joudAlkhairFee || 0).toString(),
             nhiaFee: (charge.nhiaFee || 0).toString(),
             kschmaFee: (charge.kschmaFee || 0).toString(),
             department: charge.department || '',
@@ -153,7 +150,6 @@ const FrontDeskChargeManagement = () => {
             standardFee: '',
             retainershipFee: '',
             familyRetainershipFee: '',
-            joudAlkhairFee: '',
             nhiaFee: '',
             kschmaFee: '',
             department: '',
@@ -172,7 +168,6 @@ const FrontDeskChargeManagement = () => {
             'Standard Fee': 5000,
             'Retainership Fee': 4000,
             'Family Retainership Fee': 3500,
-            'Joud Alkhair Fee': 3000,
             'NHIA Fee': 2000,
             'KSCHMA Fee': 1500
         }];
@@ -191,7 +186,6 @@ const FrontDeskChargeManagement = () => {
             'Standard Fee': c.standardFee || 0,
             'Retainership Fee': c.retainershipFee || 0,
             'Family Retainership Fee': c.familyRetainershipFee || 0,
-            'Joud Alkhair Fee': c.joudAlkhairFee || 0,
             'NHIA Fee': c.nhiaFee || 0,
             'KSCHMA Fee': c.kschmaFee || 0,
             'Status': c.active ? 'Active' : 'Inactive'
@@ -229,7 +223,6 @@ const FrontDeskChargeManagement = () => {
         lab: 'Lab Investigation',
         family: 'Family File Registration',
         retainership: 'Retainership Registration',
-        joud_alkhair: 'Joud Alkhair Registration',
         radiology: 'Radiology Investigation',
         drugs: 'Drug Purchase',
         nursing: 'Nursing Service',
@@ -346,7 +339,6 @@ const FrontDeskChargeManagement = () => {
                                     <option value="nursing">Nursing Service</option>
                                     <option value="family">Family File Registration</option>
                                     <option value="retainership">Retainership Registration</option>
-                                    <option value="joud_alkhair">Joud Alkhair Registration</option>
                                     <option value="labour">Labour Fee</option>
                                     <option value="theatre">Theatre Fee</option>
                                     <option value="other">Other</option>
@@ -354,7 +346,7 @@ const FrontDeskChargeManagement = () => {
                             </div>
                         </div>
 
-                        <div className="grid grid-cols-1 md:grid-cols-6 gap-4 mb-4">
+                        <div className="grid grid-cols-1 md:grid-cols-5 gap-4 mb-4">
                             <div>
                                 <label className="block text-gray-700 mb-2 font-semibold">
                                     Standard Fee <span className="text-red-500">*</span>
@@ -394,21 +386,6 @@ const FrontDeskChargeManagement = () => {
                                     type="number"
                                     name="familyRetainershipFee"
                                     value={formData.familyRetainershipFee}
-                                    onChange={handleInputChange}
-                                    className="w-full border p-2 rounded"
-                                    placeholder="0.00"
-                                    step="0.01"
-                                    min="0"
-                                />
-                            </div>
-                            <div>
-                                <label className="block text-gray-700 mb-2 font-semibold">
-                                    Joud Alkhair Fee
-                                </label>
-                                <input
-                                    type="number"
-                                    name="joudAlkhairFee"
-                                    value={formData.joudAlkhairFee}
                                     onChange={handleInputChange}
                                     className="w-full border p-2 rounded"
                                     placeholder="0.00"
@@ -534,7 +511,6 @@ const FrontDeskChargeManagement = () => {
                     <option value="nursing">Nursing</option>
                     <option value="family">Family File</option>
                     <option value="retainership">Retainership</option>
-                    <option value="joud_alkhair">Joud Alkhair</option>
                     <option value="labour">Labour Fee</option>
                     <option value="theatre">Theatre Fee</option>
                     <option value="other">Other</option>
@@ -581,8 +557,7 @@ const FrontDeskChargeManagement = () => {
                                                             <p><span className="font-semibold">Std:</span> ₦{(charge.standardFee || charge.basePrice || 0).toLocaleString()}</p>
                                                             <p className="text-xs text-gray-500">
                                                                 Corp Ret: ₦{(charge.retainershipFee || 0).toLocaleString()} |
-                                                                Fam Ret: ₦{(charge.familyRetainershipFee || 0).toLocaleString()} |
-                                                                Joud: ₦{(charge.joudAlkhairFee || 0).toLocaleString()}
+                                                                Fam Ret: ₦{(charge.familyRetainershipFee || 0).toLocaleString()}
                                                             </p>
                                                             <p className="text-xs text-gray-500">
                                                                 NHIA: ₦{(charge.nhiaFee || 0).toLocaleString()} |

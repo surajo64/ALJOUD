@@ -138,7 +138,6 @@ const PharmacyPOS = () => {
                     drugGroup.standardFee = earliestActive.standardFee;
                     drugGroup.retainershipFee = earliestActive.retainershipFee;
                     drugGroup.familyRetainershipFee = earliestActive.familyRetainershipFee;
-                    drugGroup.joudAlkhairFee = earliestActive.joudAlkhairFee;
                     drugGroup.nhiaFee = earliestActive.nhiaFee;
                     drugGroup.kschmaFee = earliestActive.kschmaFee;
                 }
@@ -159,7 +158,6 @@ const PharmacyPOS = () => {
         let fee = 0;
         if (provider === 'Retainership' || provider === 'Corporate Retainership') fee = drug.retainershipFee || 0;
         else if (provider === 'Family Retainership') fee = drug.familyRetainershipFee || 0;
-        else if (provider === 'Joud Alkhair Retainership') fee = drug.joudAlkhairFee || 0;
         else if (provider === 'NHIA') fee = drug.nhiaFee || 0;
         else if (provider === 'KSCHMA') fee = drug.kschmaFee || 0;
         else fee = drug.standardFee || drug.price || 0;
@@ -200,7 +198,6 @@ const PharmacyPOS = () => {
                     price: drug.price,
                     retainershipFee: drug.retainershipFee,
                     familyRetainershipFee: drug.familyRetainershipFee,
-                    joudAlkhairFee: drug.joudAlkhairFee,
                     nhiaFee: drug.nhiaFee,
                     kschmaFee: drug.kschmaFee
                 }
@@ -284,7 +281,7 @@ const PharmacyPOS = () => {
         if (isManualPaymentMethod) return;
 
         if (selectedPatient) {
-            const isRetainershipPatient = ['Retainership', 'Corporate Retainership', 'Family Retainership', 'Joud Alkhair Retainership'].includes(selectedPatient.provider);
+            const isRetainershipPatient = ['Retainership', 'Corporate Retainership', 'Family Retainership'].includes(selectedPatient.provider);
             const hasSufficientBalance = selectedPatient.depositBalance >= total;
 
             if (isRetainershipPatient && hasSufficientBalance) {
@@ -542,7 +539,6 @@ const PharmacyPOS = () => {
                                                     <span className="text-[9px] bg-green-100 text-green-700 px-2 py-0.5 rounded-full font-bold uppercase tracking-wider">In Stock</span>
                                                     {drug.retainershipFee > 0 && <span className="text-[9px] text-purple-500 font-medium tracking-tight">Corp: ₦{drug.retainershipFee.toLocaleString()}</span>}
                                                     {drug.familyRetainershipFee > 0 && <span className="text-[9px] text-pink-500 font-medium tracking-tight">Fam: ₦{drug.familyRetainershipFee.toLocaleString()}</span>}
-                                                    {drug.joudAlkhairFee > 0 && <span className="text-[9px] text-amber-500 font-medium tracking-tight">Joud: ₦{drug.joudAlkhairFee.toLocaleString()}</span>}
                                                 </div>
                                             </div>
                                         </div>
@@ -670,7 +666,7 @@ const PharmacyPOS = () => {
                                             <div>
                                                 <span className="font-medium text-gray-500 text-[11px] block">Provider</span>
                                                 <span className={`font-bold uppercase tracking-wider text-[9px] px-1.5 py-0.5 rounded-full inline-block mt-0.5 ${
-                                                    ['Retainership', 'Corporate Retainership', 'Family Retainership', 'Joud Alkhair Retainership'].includes(selectedPatient.provider)
+                                                    ['Retainership', 'Corporate Retainership', 'Family Retainership'].includes(selectedPatient.provider)
                                                         ? 'bg-purple-100 text-purple-800'
                                                         : ['NHIA', 'KSCHMA'].includes(selectedPatient.provider)
                                                         ? 'bg-blue-100 text-blue-800'
@@ -689,7 +685,7 @@ const PharmacyPOS = () => {
 
                                         {/* System Detection Banner */}
                                         <div className="mt-3 pt-2.5 border-t border-green-200 text-xs font-semibold text-gray-700">
-                                            {['Retainership', 'Corporate Retainership', 'Family Retainership', 'Joud Alkhair Retainership'].includes(selectedPatient.provider) ? (
+                                            {['Retainership', 'Corporate Retainership', 'Family Retainership'].includes(selectedPatient.provider) ? (
                                                 selectedPatient.depositBalance >= total ? (
                                                     <div className="flex items-center gap-1.5 text-purple-700 bg-purple-100/50 p-2 rounded">
                                                         <span className="inline-block w-2.5 h-2.5 bg-purple-500 rounded-full animate-pulse" />
@@ -904,7 +900,7 @@ const PharmacyPOS = () => {
                                 <option value="card">Card</option>
                                 {selectedPatient && <option value="deposit">Deposit</option>}
                                 <option value="insurance">Insurance</option>
-                                {selectedPatient && ['Retainership', 'Corporate Retainership', 'Family Retainership', 'Joud Alkhair Retainership'].includes(selectedPatient.provider) && (
+                                {selectedPatient && ['Retainership', 'Corporate Retainership', 'Family Retainership'].includes(selectedPatient.provider) && (
                                     <option value="retainership">Retainership Deposit</option>
                                 )}
                             </select>

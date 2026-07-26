@@ -21,7 +21,6 @@ const NursingServiceManagement = () => {
         standardFee: '',
         retainershipFee: '',
         familyRetainershipFee: '',
-        joudAlkhairFee: '',
         nhiaFee: '',
         kschmaFee: '',
         description: '',
@@ -72,7 +71,6 @@ const NursingServiceManagement = () => {
                 standardFee: parseFloat(formData.standardFee) || 0,
                 retainershipFee: parseFloat(formData.retainershipFee) || 0,
                 familyRetainershipFee: parseFloat(formData.familyRetainershipFee) || 0,
-                joudAlkhairFee: parseFloat(formData.joudAlkhairFee) || 0,
                 nhiaFee: parseFloat(formData.nhiaFee) || 0,
                 kschmaFee: parseFloat(formData.kschmaFee) || 0,
                 department: 'Nursing',
@@ -110,7 +108,6 @@ const NursingServiceManagement = () => {
             standardFee: (service.standardFee || 0).toString(),
             retainershipFee: (service.retainershipFee || 0).toString(),
             familyRetainershipFee: (service.familyRetainershipFee || 0).toString(),
-            joudAlkhairFee: (service.joudAlkhairFee || 0).toString(),
             nhiaFee: (service.nhiaFee || 0).toString(),
             kschmaFee: (service.kschmaFee || 0).toString(),
             description: service.description || '',
@@ -160,7 +157,6 @@ const NursingServiceManagement = () => {
             standardFee: '',
             retainershipFee: '',
             familyRetainershipFee: '',
-            joudAlkhairFee: '',
             nhiaFee: '',
             kschmaFee: '',
             description: '',
@@ -196,7 +192,6 @@ const NursingServiceManagement = () => {
             'Standard Fee': s.standardFee || 0,
             'Retainership Fee': s.retainershipFee || 0,
             'Family Retainership Fee': s.familyRetainershipFee || 0,
-            'Joud Alkhair Fee': s.joudAlkhairFee || 0,
             'NHIA Fee': s.nhiaFee || 0,
             'KSCHMA Fee': s.kschmaFee || 0,
             'Status': s.active ? 'Active' : 'Inactive'
@@ -337,19 +332,6 @@ const NursingServiceManagement = () => {
                                     />
                                 </div>
                                 <div>
-                                    <label className="block text-xs font-semibold mb-1 text-amber-600">Joud Alkhair</label>
-                                    <input
-                                        type="number"
-                                        name="joudAlkhairFee"
-                                        value={formData.joudAlkhairFee}
-                                        onChange={handleInputChange}
-                                        className="w-full border p-2 rounded text-sm border-amber-200 focus:border-amber-500"
-                                        placeholder="0.00"
-                                        step="0.01"
-                                        min="0"
-                                    />
-                                </div>
-                                <div>
                                     <label className="block text-xs font-semibold mb-1 text-green-600">NHIA Fee</label>
                                     <input
                                         type="number"
@@ -478,12 +460,6 @@ const NursingServiceManagement = () => {
                                                             <div className="flex justify-between gap-1">
                                                                 <span className="text-pink-600">Fam:</span>
                                                                 <span>₦{service.familyRetainershipFee.toLocaleString()}</span>
-                                                            </div>
-                                                        )}
-                                                        {service.joudAlkhairFee > 0 && (
-                                                            <div className="flex justify-between gap-1">
-                                                                <span className="text-amber-600">Joud:</span>
-                                                                <span>₦{service.joudAlkhairFee.toLocaleString()}</span>
                                                             </div>
                                                         )}
                                                         {service.nhiaFee > 0 && (

@@ -44,7 +44,6 @@ const Inventory = () => {
         standardFee: "",
         retainershipFee: "",
         familyRetainershipFee: "",
-        joudAlkhairFee: "",
         nhiaFee: "",
         kschmaFee: "",
         purchasingPrice: "",
@@ -188,7 +187,6 @@ const Inventory = () => {
             'Standard Fee': 50,
             'Retainership Fee': 45,
             'Family Retainership Fee': 40,
-            'Joud Alkhair Fee': 35,
             'NHIA Fee': 40,
             'KSCHMA Fee': 40,
             'Purchasing Price': 30,
@@ -244,7 +242,6 @@ const Inventory = () => {
                 'Standard Fee': item.standardFee || item.price || 0,
                 'Retainership Fee': item.retainershipFee || 0,
                 'Family Retainership Fee': item.familyRetainershipFee || 0,
-                'Joud Alkhair Fee': item.joudAlkhairFee || 0,
                 'NHIA Fee': item.nhiaFee || 0,
                 'KSCHMA Fee': item.kschmaFee || 0,
                 'Purchasing Price': item.purchasingPrice || 0,
@@ -296,7 +293,6 @@ const Inventory = () => {
             standardFee: "",
             retainershipFee: "",
             familyRetainershipFee: "",
-            joudAlkhairFee: "",
             nhiaFee: "",
             kschmaFee: "",
             purchasingPrice: "",
@@ -322,7 +318,6 @@ const Inventory = () => {
             standardFee: item.standardFee || item.price || "",
             retainershipFee: item.retainershipFee || "",
             familyRetainershipFee: item.familyRetainershipFee || "",
-            joudAlkhairFee: item.joudAlkhairFee || "",
             nhiaFee: item.nhiaFee || "",
             kschmaFee: item.kschmaFee || "",
             expiryDate: item.expiryDate ? item.expiryDate.substring(0, 10) : "",
@@ -339,7 +334,6 @@ const Inventory = () => {
             standardFee: item.standardFee || item.price || "",
             retainershipFee: item.retainershipFee || "",
             familyRetainershipFee: item.familyRetainershipFee || "",
-            joudAlkhairFee: item.joudAlkhairFee || "",
             nhiaFee: item.nhiaFee || "",
             kschmaFee: item.kschmaFee || "",
             purchasingPrice: item.purchasingPrice || "",
@@ -417,9 +411,27 @@ const Inventory = () => {
     // Filtered & searched items with aggregation when viewing all pharmacies
     let filteredItems = items
         .filter((item) => item.name.toLowerCase().includes(search.toLowerCase()))
-        .filter((item) => expiryFilter === "All" || checkExpiry(item.expiryDate) === expiryFilter)
-        // Hide ALL zero-quantity items; expired items are only shown if they still have stock (for disposal tracking)
-        .filter((item) => item.quantity > 0);
+        .filter((item) => expiryFilter === "All" || checkExpiry(item.expiryDate) === expiryFilter);
+
+    // Hide 0-quantity batches if there is at least one active batch (quantity > 0) of the same drug in the same pharmacy
+    filteredItems = filteredItems.filter((item) => {
+        if (item.quantity > 0) return true;
+        
+        const itemPharmacyId = item.pharmacy?._id || item.pharmacy || '';
+        const itemPharmacyIdStr = typeof itemPharmacyId === 'object' ? itemPharmacyId.toString() : String(itemPharmacyId);
+        
+        const hasActiveBatch = filteredItems.some((other) => {
+            const otherPharmacyId = other.pharmacy?._id || other.pharmacy || '';
+            const otherPharmacyIdStr = typeof otherPharmacyId === 'object' ? otherPharmacyId.toString() : String(otherPharmacyId);
+            return (
+                other.name.toLowerCase() === item.name.toLowerCase() &&
+                otherPharmacyIdStr === itemPharmacyIdStr &&
+                other.quantity > 0 &&
+                other._id !== item._id
+            );
+        });
+        return !hasActiveBatch;
+    });
 
     // If viewing all pharmacies, aggregate quantities by drug name - but still show batch details
     if (!selectedPharmacy) {
@@ -438,7 +450,6 @@ const Inventory = () => {
                     standardFee: item.standardFee,
                     retainershipFee: item.retainershipFee,
                     familyRetainershipFee: item.familyRetainershipFee,
-                    joudAlkhairFee: item.joudAlkhairFee,
                     nhiaFee: item.nhiaFee,
                     kschmaFee: item.kschmaFee,
                     expiryDate: item.expiryDate,
@@ -761,12 +772,6 @@ const Inventory = () => {
                                                         <span>₦{item.familyRetainershipFee.toLocaleString()}</span>
                                                     </div>
                                                 )}
-                                                {item.joudAlkhairFee > 0 && (
-                                                    <div className="flex justify-between gap-1">
-                                                        <span className="text-amber-600">Joud:</span>
-                                                        <span>₦{item.joudAlkhairFee.toLocaleString()}</span>
-                                                    </div>
-                                                )}
                                                 {item.nhiaFee > 0 && (
                                                     <div className="flex justify-between gap-1">
                                                         <span className="text-green-600">NHIA:</span>
@@ -904,16 +909,6 @@ const Inventory = () => {
                                             className="w-full border p-2 rounded text-sm border-pink-200 focus:border-pink-500"
                                             value={currentItem.familyRetainershipFee}
                                             onChange={(e) => setCurrentItem({ ...currentItem, familyRetainershipFee: e.target.value })}
-                                            placeholder="0.00"
-                                        />
-                                    </div>
-                                    <div>
-                                        <label className="block text-xs font-semibold mb-1 text-amber-600">Joud Alkhair</label>
-                                        <input
-                                            type="number"
-                                            className="w-full border p-2 rounded text-sm border-amber-200 focus:border-amber-500"
-                                            value={currentItem.joudAlkhairFee}
-                                            onChange={(e) => setCurrentItem({ ...currentItem, joudAlkhairFee: e.target.value })}
                                             placeholder="0.00"
                                         />
                                     </div>

@@ -132,6 +132,7 @@ const PatientManagement = () => {
     useEffect(() => {
         if (pendingEncounterPatient && !showRegisterPatientModal) {
             setEncounterPatient(pendingEncounterPatient);
+            // We may not have encounter history here, default to Outpatient for new flow
             setEncounterType('Outpatient');
             setSelectedClinic('');
             setReasonForVisit('');
@@ -348,30 +349,9 @@ const PatientManagement = () => {
         );
     };
 
-    const getChargePrice = (charge, patient) => {
-        if (!charge) return 0;
-        const provider = patient?.provider || 'Standard';
-        if (['Retainership', 'Corporate Retainership'].includes(provider)) {
-            return charge.retainershipFee || charge.standardFee || charge.basePrice || 0;
-        }
-        if (provider === 'Family Retainership') {
-            return charge.familyRetainershipFee || charge.standardFee || charge.basePrice || 0;
-        }
-        if (provider === 'Joud Alkhair Retainership') {
-            return charge.joudAlkhairFee || charge.standardFee || charge.basePrice || 0;
-        }
-        if (provider === 'NHIA') {
-            return charge.nhiaFee || charge.standardFee || charge.basePrice || 0;
-        }
-        if (provider === 'KSCHMA') {
-            return charge.kschmaFee || charge.standardFee || charge.basePrice || 0;
-        }
-        return charge.standardFee || charge.basePrice || 0;
-    };
-
     const handleCreateEncounter = async () => {
         if (!encounterPatient) return;
-        if (!isANC && !waiveConsultationFee && !['External Investigation', 'External Pharmacy', 'External Lab/Radiology', 'Inpatient'].includes(encounterType) && selectedCharges.length === 0) {
+        if (!isANC && !waiveConsultationFee && !['External Investigation', 'External Pharmacy', 'External Lab/Radiology', 'Inpatient', 'ANC Visit'].includes(encounterType) && selectedCharges.length === 0) {
             toast.error('Please select at least one charge, or check ANC to skip charges');
             return;
         }
@@ -408,7 +388,7 @@ const PatientManagement = () => {
             }
             const total = charges.filter(c => selectedCharges.includes(c._id)).reduce((s, c) => {
                 if (waiveConsultationFee && c.type === 'consultation') return s;
-                return s + getChargePrice(c, encounterPatient);
+                return s + c.basePrice;
             }, 0);
             if (!['External Investigation', 'External Pharmacy', 'External Lab/Radiology', 'Inpatient'].includes(encounterType)) {
                 await axios.put(`${backendUrl}/api/visits/${visitResponse.data._id}`,
@@ -1164,14 +1144,13 @@ const PatientManagement = () => {
                                             <option value="Standard">Standard</option>
                                             <option value="Corporate Retainership">Corporate Retainership</option>
                                             <option value="Family Retainership">Family Retainership</option>
-                                            <option value="Joud Alkhair Retainership">Joud Alkhair Retainership</option>
                                             <option value="NHIA">NHIA</option>
                                             <option value="KSCHMA">KSCHMA</option>
                                         </select>
                                     </div>
  
                                     {/* HMO - Shown for Retainership, NHIA and KSCHMA */}
-                                    {(['Retainership', 'Corporate Retainership', 'Family Retainership', 'Joud Alkhair Retainership', 'NHIA', 'KSCHMA'].includes(editPatient.provider)) && (
+                                    {(['Retainership', 'Corporate Retainership', 'Family Retainership', 'NHIA', 'KSCHMA'].includes(editPatient.provider)) && (
                                         <div>
                                             <label className="block text-sm font-semibold mb-1">
                                                 HMO <span className="text-red-500">*</span>
@@ -1181,7 +1160,7 @@ const PatientManagement = () => {
                                                 name="hmo"
                                                 value={editPatient.hmo || ''}
                                                 onChange={handleEditChange}
-                                                required={['Retainership', 'Corporate Retainership', 'Family Retainership', 'Joud Alkhair Retainership', 'NHIA', 'KSCHMA'].includes(editPatient.provider)}
+                                                required={['Retainership', 'Corporate Retainership', 'Family Retainership', 'NHIA', 'KSCHMA'].includes(editPatient.provider)}
                                             >
                                                 <option value="">Select HMO *</option>
                                                 {hmos
@@ -1195,9 +1174,6 @@ const PatientManagement = () => {
                                                         }
                                                         if (editPatient.provider === 'Family Retainership') {
                                                             return hmo.category === 'Retainership' && hmo.retainershipType === 'Family';
-                                                        }
-                                                        if (editPatient.provider === 'Joud Alkhair Retainership') {
-                                                            return hmo.category === 'Retainership' && hmo.retainershipType === 'Joud Alkhair';
                                                         }
                                                         if (editPatient.provider === 'Retainership') {
                                                             return hmo.category === 'Retainership';
@@ -1346,6 +1322,7 @@ const PatientManagement = () => {
                                     <option value="Inpatient">Inpatient</option>
                                     <option value="Emergency">Emergency</option>
                                     <option value="Follow-up">Follow-up</option>
+                                    <option value="ANC Visit">🤰 ANC Visit</option>
                                     <option value="External Lab/Radiology">External Lab/Radiology</option>
                                     <option value="External Pharmacy">External Pharmacy</option>
                                     <option value="Consultation">Consultation</option>
@@ -1548,7 +1525,7 @@ const PatientManagement = () => {
                             )}
 
                             {/* Charges */}
-                            {!isANC && !['External Investigation', 'External Pharmacy', 'External Lab/Radiology', 'Inpatient'].includes(encounterType) && (
+                            {!isANC && !['External Investigation', 'External Pharmacy', 'External Lab/Radiology', 'Inpatient', 'ANC Visit'].includes(encounterType) && (
                                 <div className="mb-6">
                                     <label className="block text-gray-700 font-semibold mb-2">
                                         Consultation Charges <span className="text-red-500">*</span>
@@ -1558,7 +1535,7 @@ const PatientManagement = () => {
                                     ) : (
                                         <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                                             {charges.map(charge => {
-                                                const patientFee = (waiveConsultationFee && charge.type === 'consultation') ? 0 : getChargePrice(charge, encounterPatient);
+                                                const patientFee = (waiveConsultationFee && charge.type === 'consultation') ? 0 : charge.basePrice;
                                                 return (
                                                     <label key={charge._id} className={`flex items-center gap-3 p-3 border rounded cursor-pointer ${selectedCharges.includes(charge._id) ? 'border-blue-500 bg-blue-50' : 'hover:bg-gray-50'
                                                         }`}>
@@ -1581,7 +1558,7 @@ const PatientManagement = () => {
                                         <p className="mt-2 text-right font-bold text-blue-700">
                                             Total: ₦{charges.filter(c => selectedCharges.includes(c._id)).reduce((s, c) => {
                                                 if (waiveConsultationFee && c.type === 'consultation') return s;
-                                                return s + getChargePrice(c, encounterPatient);
+                                                return s + c.basePrice;
                                             }, 0).toLocaleString()}
                                         </p>
                                     )}
