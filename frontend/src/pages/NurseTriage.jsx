@@ -4,7 +4,7 @@ import axios from 'axios';
 import AuthContext from '../context/AuthContext';
 import { AppContext } from '../context/AppContext';
 import Layout from '../components/Layout';
-import { FaUserMd, FaSearch, FaCheckCircle, FaNotesMedical, FaHeartbeat, FaMoneyBillWave, FaTrash, FaEdit, FaPlus, FaTimes, FaTable, FaClock, FaChevronDown, FaChevronRight, FaHistory, FaClipboardList, FaCheck, FaCommentAlt } from 'react-icons/fa';
+import { FaUserMd, FaSearch, FaCheckCircle, FaNotesMedical, FaHeartbeat, FaMoneyBillWave, FaTrash, FaEdit, FaPlus, FaTimes, FaTable, FaClock, FaChevronDown, FaChevronRight, FaHistory, FaClipboardList, FaCheck, FaCommentAlt, FaProcedures, FaDoorOpen } from 'react-icons/fa';
 import { toast } from 'react-toastify';
 import LoadingOverlay from '../components/loadingOverlay';
 import { formatAge } from '../utils/patientUtils';
@@ -1347,7 +1347,7 @@ const NurseTriage = () => {
                             )}
 
                             {/* Drug Observation Chart - Only for Admitted Inpatients */}
-                            {(selectedEncounter.type === 'Inpatient' && selectedEncounter.encounterStatus !== 'discharged' && selectedEncounter.encounterStatus !== 'cancelled') && (
+                            {((selectedEncounter.type === 'Inpatient' || selectedEncounter.encounterStatus === 'admitted' || selectedEncounter.status === 'Admitted' || Boolean(selectedEncounter.ward)) && selectedEncounter.encounterStatus !== 'discharged' && selectedEncounter.encounterStatus !== 'cancelled') && (
                                 <div className="mb-8">
                                     <div className="bg-gradient-to-r from-blue-700 to-blue-600 text-white p-3 rounded-t-lg flex justify-between items-center shadow-md">
                                         <h4 className="font-bold flex items-center gap-2">
@@ -1896,27 +1896,38 @@ const NurseTriage = () => {
                                                 >
                                                     <FaNotesMedical /> Add Nurse Note
                                                 </button>
-                                                {(selectedEncounter.type === 'Outpatient' || selectedEncounter.type === 'Emergency') && (
-                                                    <button
-                                                        onClick={(e) => handleOpenConvertModal(e, selectedEncounter)}
-                                                        className="bg-purple-600 text-white px-4 py-2 rounded hover:bg-purple-700 flex items-center gap-2 text-sm"
-                                                    >
-                                                        Admit Patient
-                                                    </button>
-                                                )}
-                                                {selectedEncounter.type === 'Inpatient' && selectedEncounter.encounterStatus !== 'discharged' && (
-                                                    <button
-                                                        onClick={(e) => handleDischarge(e, selectedEncounter)}
-                                                        className="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700 flex items-center gap-2 text-sm"
-                                                    >
-                                                        Discharge Patient
-                                                    </button>
-                                                )}
-                                                {selectedEncounter.type === 'Inpatient' && selectedEncounter.encounterStatus === 'discharged' && (
-                                                    <div className="px-4 py-2 bg-green-600 text-white rounded flex items-center gap-2 text-sm">
-                                                        ✓ Discharged
-                                                    </div>
-                                                )}
+                                                {(() => {
+                                                    const isAdmitted = selectedEncounter.encounterStatus === 'admitted' || selectedEncounter.status === 'Admitted' || selectedEncounter.type === 'Inpatient' || selectedEncounter.encounterType === 'Inpatient' || Boolean(selectedEncounter.ward);
+                                                    const isDischarged = selectedEncounter.encounterStatus === 'discharged' || selectedEncounter.status === 'Discharged';
+
+                                                    if (isDischarged) {
+                                                        return (
+                                                            <div className="px-4 py-2 bg-green-600 text-white rounded flex items-center gap-2 text-sm font-semibold shadow-sm">
+                                                                <FaCheckCircle /> Discharged
+                                                            </div>
+                                                        );
+                                                    }
+
+                                                    if (isAdmitted) {
+                                                        return (
+                                                            <button
+                                                                onClick={(e) => handleDischarge(e, selectedEncounter)}
+                                                                className="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700 flex items-center gap-2 text-sm font-semibold shadow-sm transition-all"
+                                                            >
+                                                                <FaDoorOpen /> Discharge Patient
+                                                            </button>
+                                                        );
+                                                    }
+
+                                                    return (
+                                                        <button
+                                                            onClick={(e) => handleOpenConvertModal(e, selectedEncounter)}
+                                                            className="bg-purple-600 text-white px-4 py-2 rounded hover:bg-purple-700 flex items-center gap-2 text-sm font-semibold shadow-sm transition-all"
+                                                        >
+                                                            <FaProcedures /> Admit Patient
+                                                        </button>
+                                                    );
+                                                })()}
                                             </>
                                         )}
                                     </div>

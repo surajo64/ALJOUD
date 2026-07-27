@@ -1316,7 +1316,7 @@ const PatientDetails = () => {
         if (encounter.isActive === false) return false;
         if (encounter.isActive === true) return true;
 
-        if (encounter.type === 'Inpatient') {
+        if (encounter.type === 'Inpatient' || encounter.encounterStatus === 'admitted' || encounter.status === 'Admitted' || Boolean(encounter.ward)) {
             // Inpatient encounters are active until discharged
             // Active statuses: admitted, in_progress, with_doctor, in_nursing, in_lab, in_radiology, in_pharmacy, in_ward, awaiting_services
             const activeStatuses = ['admitted', 'in_progress', 'with_doctor', 'in_nursing', 'in_lab', 'in_radiology', 'in_pharmacy', 'in_ward', 'awaiting_services', 'registered', 'payment_pending'];
@@ -2771,15 +2771,30 @@ const PatientDetails = () => {
                             )
                         )}
                         {['doctor', 'nurse', 'receptionist', 'admin'].includes(user.role) &&
-                            ['Outpatient', 'Emergency'].includes(encounter?.type) &&
                             isEncounterActive() &&
                             !viewingPastEncounter && (
-                                <button
-                                    onClick={() => setShowConvertModal(true)}
-                                    className="bg-emerald-600 text-white px-4 py-2 rounded flex items-center gap-2 hover:bg-emerald-700 ml-2 transition shadow-sm font-semibold text-sm"
-                                >
-                                    <FaProcedures /> Admit Patient
-                                </button>
+                                <>
+                                    {!(encounter?.encounterStatus === 'admitted' || encounter?.status === 'Admitted' || encounter?.type === 'Inpatient' || Boolean(encounter?.ward)) &&
+                                        encounter?.encounterStatus !== 'discharged' && encounter?.status !== 'Discharged' && (
+                                            <button
+                                                onClick={() => setShowConvertModal(true)}
+                                                className="bg-emerald-600 text-white px-4 py-2 rounded flex items-center gap-2 hover:bg-emerald-700 ml-2 transition shadow-sm font-semibold text-sm"
+                                            >
+                                                <FaProcedures /> Admit Patient
+                                            </button>
+                                        )}
+                                    {(encounter?.encounterStatus === 'admitted' || encounter?.status === 'Admitted' || encounter?.type === 'Inpatient' || Boolean(encounter?.ward)) &&
+                                        encounter?.encounterStatus !== 'discharged' && encounter?.status !== 'Discharged' && (
+                                            <button
+                                                onClick={handleDischarge}
+                                                disabled={!canEdit}
+                                                className={`px-4 py-2 rounded flex items-center gap-2 ml-2 transition shadow-sm font-semibold text-sm ${!canEdit ? 'bg-gray-300 cursor-not-allowed text-gray-500' : 'bg-red-600 text-white hover:bg-red-700'
+                                                    }`}
+                                            >
+                                                <FaTimes /> Discharge Patient
+                                            </button>
+                                        )}
+                                </>
                             )}
                     </div>
                 )
