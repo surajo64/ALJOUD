@@ -404,6 +404,21 @@ const PatientDetails = () => {
     const [retainershipDepositStatus, setRetainershipDepositStatus] = useState([]);
     const [availableBeds, setAvailableBeds] = useState([]);
 
+    const [showDrugAdminModal, setShowDrugAdminModal] = useState(false);
+    const [adminForm, setAdminForm] = useState({
+        prescriptionId: '',
+        medicineId: '',
+        medicineName: '',
+        dosage: '',
+        date: '',
+        time: '',
+        remarks: ''
+    });
+
+    const [showCompleteTaskModal, setShowCompleteTaskModal] = useState(false);
+    const [taskToComplete, setTaskToComplete] = useState(null);
+    const [nurseTaskComment, setNurseTaskComment] = useState('');
+
     // Orders
     const [selectedLabTest, setSelectedLabTest] = useState('');
     const [tempLabOrders, setTempLabOrders] = useState([]); // Multi-select for Lab
@@ -951,19 +966,54 @@ const PatientDetails = () => {
         }
     };
 
-    const handleUpdateOrderTaskStatus = async (taskId, newStatus = 'Completed') => {
+    const handleRecordDrugAdmin = async () => {
+        if (!adminForm.prescriptionId || !adminForm.medicineName) {
+            toast.error('Missing prescription info for administration');
+            return;
+        }
+
         try {
+            const config = { headers: { Authorization: `Bearer ${user.token}` } };
+            const payload = {
+                visitId: encounter._id,
+                patientId: patient._id,
+                prescriptionId: adminForm.prescriptionId,
+                medicineId: adminForm.medicineId,
+                medicineName: adminForm.medicineName,
+                dosage: adminForm.dosage,
+                administeredAt: `${adminForm.date}T${adminForm.time}:00`,
+                remarks: adminForm.remarks
+            };
+
+            await axios.post(`${backendUrl}/api/drug-administration`, payload, config);
+            toast.success(`Administered ${adminForm.medicineName} recorded successfully!`);
+            setShowDrugAdminModal(false);
+            fetchDrugAdministrationData(encounter._id);
+        } catch (err) {
+            console.error('Error recording administration:', err);
+            toast.error(err.response?.data?.message || 'Failed to record drug administration');
+        }
+    };
+
+    const handleUpdateOrderTaskStatus = async (taskId, newStatus = 'Completed', nurseComment = '') => {
+        try {
+            setLoading(true);
             const config = { headers: { Authorization: `Bearer ${user.token}` } };
             const response = await axios.put(
                 `${backendUrl}/api/visits/${encounter._id}/order-tasks/${taskId}/status`,
-                { status: newStatus },
+                { status: newStatus, nurseComment },
                 config
             );
             toast.success(`Order task marked as ${newStatus.toLowerCase()}`);
             setEncounter(response.data);
+            setShowCompleteTaskModal(false);
+            setTaskToComplete(null);
+            setNurseTaskComment('');
         } catch (err) {
             console.error('Error updating order task status:', err);
             toast.error(err.response?.data?.message || 'Failed to update order task status');
+        } finally {
+            setLoading(false);
         }
     };
 
@@ -3191,9 +3241,23 @@ const PatientDetails = () => {
                                                                                 </span>
                                                                             </div>
 
-                                                                            <p className="text-xs text-gray-800 font-medium whitespace-pre-line bg-gray-50 p-2.5 rounded border border-gray-200 mt-1">
-                                                                                {task.instructions}
-                                                                            </p>
+                                                                            <div className="bg-gray-50 p-2.5 rounded border border-gray-200 mt-1">
+                                                                                <span className="text-[10px] text-gray-500 font-bold uppercase tracking-wider block mb-0.5">Doctor Instructions:</span>
+                                                                                <p className="text-xs text-gray-800 font-medium whitespace-pre-line">
+                                                                                    {task.instructions}
+                                                                                </p>
+                                                                            </div>
+
+                                                                            {isCompleted && task.nurseComment && (
+                                                                                <div className="bg-green-50 p-2.5 rounded border border-green-200 mt-1.5 shadow-2xs">
+                                                                                    <span className="text-[10px] text-green-800 font-extrabold uppercase tracking-wider flex items-center gap-1 mb-0.5">
+                                                                                        💬 Nurse Execution Notes / Comments:
+                                                                                    </span>
+                                                                                    <p className="text-xs text-green-950 font-medium whitespace-pre-line">
+                                                                                        {task.nurseComment}
+                                                                                    </p>
+                                                                                </div>
+                                                                            )}
 
                                                                             <div className="flex items-center gap-3 text-[11px] text-gray-500 pt-1 flex-wrap">
                                                                                 <span>Doctor: <strong className="text-gray-700">{task.doctorName || task.doctor?.name || 'Doctor'}</strong></span>
@@ -3209,7 +3273,7 @@ const PatientDetails = () => {
                                                                                     </span>
                                                                                 )}
                                                                                 {isCompleted && (
-                                                                                    <span className="text-green-700 font-medium bg-green-100/80 px-2 py-0.5 rounded border border-green-200">
+                                                                                    <span className="text-green-700 font-medium bg-green-100/80 px-2 py-0.5 rounded border border-green-200 text-[11px]">
                                                                                         • Completed by Nurse <strong>{task.completedByName || task.completedBy?.name || 'Nurse'}</strong> at {new Date(task.completedAt).toLocaleString()}
                                                                                     </span>
                                                                                 )}
@@ -3240,7 +3304,11 @@ const PatientDetails = () => {
                                                                                     {!isCompleted ? (
                                                                                         <button
                                                                                             type="button"
-                                                                                            onClick={() => handleUpdateOrderTaskStatus(task._id, 'Completed')}
+                                                                                            onClick={() => {
+                                                                                                setTaskToComplete(task);
+                                                                                                setNurseTaskComment('');
+                                                                                                setShowCompleteTaskModal(true);
+                                                                                            }}
                                                                                             className="px-3.5 py-2 text-xs bg-green-600 text-white font-bold rounded-lg hover:bg-green-700 transition flex items-center gap-1.5 shadow-sm active:scale-95"
                                                                                         >
                                                                                             <FaCheckCircle /> Mark as Completed
@@ -7726,6 +7794,124 @@ const PatientDetails = () => {
                                 className="px-5 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg font-bold text-sm shadow transition flex items-center gap-2"
                             >
                                 🛑 Confirm & Stop Medication
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Drug Administration Modal */}
+            {showDrugAdminModal && (
+                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[9999] p-4 animate-fade-in">
+                    <div className="bg-white rounded-lg shadow-2xl max-w-md w-full border-t-4 border-green-600">
+                        <div className="p-4 border-b flex justify-between items-center bg-green-50">
+                            <h3 className="font-bold text-xl text-green-800 flex items-center gap-2">
+                                <FaNotesMedical /> Record Administration
+                            </h3>
+                            <button onClick={() => setShowDrugAdminModal(false)} className="text-2xl text-gray-400 hover:text-gray-600">&times;</button>
+                        </div>
+                        <div className="p-6 space-y-4">
+                            <div className="bg-blue-50 p-3 rounded border border-blue-100">
+                                <p className="text-xs text-blue-600 font-semibold uppercase tracking-wider">Medication</p>
+                                <p className="font-bold text-lg text-blue-900">{adminForm.medicineName}</p>
+                                <p className="text-sm text-blue-700">Dosage: {adminForm.dosage}</p>
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label className="block text-sm font-bold text-gray-700 mb-1">Date Given</label>
+                                    <input
+                                        type="date"
+                                        className="w-full border p-2 rounded focus:ring-2 focus:ring-green-300 outline-none"
+                                        value={adminForm.date}
+                                        onChange={(e) => setAdminForm({ ...adminForm, date: e.target.value })}
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-bold text-gray-700 mb-1">Time Given</label>
+                                    <input
+                                        type="time"
+                                        className="w-full border p-2 rounded focus:ring-2 focus:ring-green-300 outline-none"
+                                        value={adminForm.time}
+                                        onChange={(e) => setAdminForm({ ...adminForm, time: e.target.value })}
+                                    />
+                                </div>
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-bold text-gray-700 mb-1">Observation Notes</label>
+                                <textarea
+                                    className="w-full border p-2 rounded focus:ring-2 focus:ring-green-300 outline-none"
+                                    rows="3"
+                                    placeholder="e.g. Patient took medicine without difficulty..."
+                                    value={adminForm.remarks}
+                                    onChange={(e) => setAdminForm({ ...adminForm, remarks: e.target.value })}
+                                ></textarea>
+                            </div>
+                        </div>
+                        <div className="p-4 bg-gray-50 border-t flex justify-end gap-3 rounded-b-lg">
+                            <button
+                                onClick={() => setShowDrugAdminModal(false)}
+                                className="px-5 py-2 text-gray-600 hover:bg-gray-200 rounded font-semibold transition"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                onClick={handleRecordDrugAdmin}
+                                className="px-5 py-2 bg-green-600 hover:bg-green-700 text-white rounded font-bold transition shadow"
+                            >
+                                Record Administration
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Complete Doctor Order Task Modal */}
+            {showCompleteTaskModal && taskToComplete && (
+                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[9999] p-4 animate-fade-in">
+                    <div className="bg-white rounded-lg shadow-2xl max-w-md w-full border-t-4 border-green-600">
+                        <div className="p-4 border-b flex justify-between items-center bg-green-50">
+                            <h3 className="font-bold text-lg text-green-800 flex items-center gap-2">
+                                <FaCheckCircle /> Complete Order Task
+                            </h3>
+                            <button onClick={() => { setShowCompleteTaskModal(false); setTaskToComplete(null); }} className="text-2xl text-gray-400 hover:text-gray-600">&times;</button>
+                        </div>
+                        <div className="p-5 space-y-4">
+                            <div className="bg-gray-50 p-3 rounded border border-gray-200 text-xs space-y-1">
+                                <div className="flex items-center gap-2">
+                                    <span className="font-bold text-indigo-900">{taskToComplete.orderType}</span>
+                                    <span className="text-gray-500">• Doctor: Dr. {taskToComplete.doctorName || taskToComplete.doctor?.name || 'Doctor'}</span>
+                                </div>
+                                <p className="text-gray-700 italic font-medium whitespace-pre-line mt-1">{taskToComplete.instructions}</p>
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-bold text-gray-700 mb-1">
+                                    Nurse Comments / Execution Notes
+                                </label>
+                                <textarea
+                                    className="w-full border p-2.5 rounded focus:ring-2 focus:ring-green-400 outline-none text-xs"
+                                    rows="3"
+                                    placeholder="Enter comments or execution notes before marking completed..."
+                                    value={nurseTaskComment}
+                                    onChange={(e) => setNurseTaskComment(e.target.value)}
+                                    autoFocus
+                                ></textarea>
+                            </div>
+                        </div>
+                        <div className="p-4 bg-gray-50 border-t flex justify-end gap-3 rounded-b-lg">
+                            <button
+                                onClick={() => { setShowCompleteTaskModal(false); setTaskToComplete(null); }}
+                                className="px-4 py-2 text-gray-600 hover:bg-gray-200 rounded font-semibold text-xs transition"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                onClick={() => handleUpdateOrderTaskStatus(taskToComplete._id, 'Completed', nurseTaskComment)}
+                                className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded font-bold text-xs transition shadow flex items-center gap-1.5"
+                            >
+                                <FaCheckCircle size={12} /> Confirm & Mark Completed
                             </button>
                         </div>
                     </div>

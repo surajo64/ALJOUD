@@ -4,6 +4,7 @@ const Patient = require('../models/patientModel');
 const Visit = require('../models/visitModel');
 const Receipt = require('../models/receiptModel');
 const Charge = require('../models/chargeModel');
+const { isPatientAdmitted } = require('../utils/admissionUtils');
 
 // @desc    Create new lab order
 // @route   POST /api/lab
@@ -349,7 +350,8 @@ const processDirectSale = async (req, res) => {
                     finalPaymentMethod = 'cash';
                 }
             } else if (!isRetainershipProvider && paymentMethod === 'deposit') {
-                if (salePatient.depositBalance >= totalAmount) {
+                const isAdmitted = await isPatientAdmitted(salePatient._id);
+                if (isAdmitted || salePatient.depositBalance >= totalAmount) {
                     finalPaymentMethod = 'deposit';
                     salePatient.depositBalance -= totalAmount;
                     await salePatient.save();

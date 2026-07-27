@@ -43,38 +43,34 @@ const attemptPaymentForCharge = async (charge, visit, userId) => {
         if (provider === 'Standard') {
             const currentBalance = patient.depositBalance || 0;
 
-            if (currentBalance >= amount) {
-                // Deduct from deposit
-                patient.depositBalance = currentBalance - amount;
-                await patient.save();
+            // Bed fee billing is strictly for admitted patients.
+            // Deduct from deposit balance (allows negative balance while admitted)
+            patient.depositBalance = currentBalance - amount;
+            await patient.save();
 
-                // Create Receipt
-                const receiptNumber = `RCP-${Date.now().toString().slice(-6)}-${Math.floor(1000 + Math.random() * 9000)}`;
-                const receipt = await Receipt.create({
-                    patient: patient._id,
-                    encounter: visit._id,
-                    charges: [charge._id],
-                    amountPaid: amount,
-                    paymentMethod: 'deposit',
-                    cashier: cashierId,
-                    receiptNumber,
-                    validated: true,
-                    paymentDate: charge.createdAt,
-                    createdAt: charge.createdAt,
-                    updatedAt: charge.createdAt
-                });
+            // Create Receipt
+            const receiptNumber = `RCP-${Date.now().toString().slice(-6)}-${Math.floor(1000 + Math.random() * 9000)}`;
+            const receipt = await Receipt.create({
+                patient: patient._id,
+                encounter: visit._id,
+                charges: [charge._id],
+                amountPaid: amount,
+                paymentMethod: 'deposit',
+                cashier: cashierId,
+                receiptNumber,
+                validated: true,
+                paymentDate: charge.createdAt,
+                createdAt: charge.createdAt,
+                updatedAt: charge.createdAt
+            });
 
-                // Update charge status to paid
-                charge.status = 'paid';
-                charge.receipt = receipt._id;
-                await charge.save();
+            // Update charge status to paid
+            charge.status = 'paid';
+            charge.receipt = receipt._id;
+            await charge.save();
 
-                console.log(`[BedFeeBilling] Auto-paid pending charge ${charge._id} from deposit. New Balance: ${patient.depositBalance}`);
-                return true; // success
-            } else {
-                console.log(`[BedFeeBilling] Insufficient deposit balance for patient ${patient.name} . Required: ${amount}, Balance: ${currentBalance}`);
-                return false; // failed
-            }
+            console.log(`[BedFeeBilling] Auto-paid pending charge ${charge._id} from deposit. New Balance: ${patient.depositBalance}`);
+            return true; // success
         } else if (['Retainership', 'Corporate Retainership', 'Family Retainership', 'Joud Alkhair Retainership'].includes(provider)) {
             // Deduct from HMO Retainership balance
             const hmo = await HMO.findOne({ name: patient.hmo });

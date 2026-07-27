@@ -4,6 +4,7 @@ const Patient = require('../models/patientModel');
 const Visit = require('../models/visitModel');
 const EncounterCharge = require('../models/encounterChargeModel');
 const Receipt = require('../models/receiptModel');
+const { isPatientAdmitted } = require('../utils/admissionUtils');
 
 const getHMOWalletBalance = async (hmoName) => {
     const HMO = require('../models/hmoModel');
@@ -145,7 +146,8 @@ const processDirectSale = async (req, res) => {
                     finalPaymentMethod = 'cash';
                 }
             } else if (!isRetainershipProvider && paymentMethod === 'deposit') {
-                if (salePatient.depositBalance >= totalAmount) {
+                const isAdmitted = await isPatientAdmitted(salePatient._id);
+                if (isAdmitted || salePatient.depositBalance >= totalAmount) {
                     finalPaymentMethod = 'deposit';
                     isWalletDeduction = true;
                     salePatient.depositBalance -= totalAmount;
