@@ -3262,11 +3262,6 @@ const PatientDetails = () => {
                                                                             <div className="flex items-center gap-3 text-[11px] text-gray-500 pt-1 flex-wrap">
                                                                                 <span>Doctor: <strong className="text-gray-700">{task.doctorName || task.doctor?.name || 'Doctor'}</strong></span>
                                                                                 <span>Ordered: {new Date(task.createdAt).toLocaleString()}</span>
-                                                                                {task.expectedDischargeDate && (
-                                                                                    <span className="text-blue-700 font-bold bg-blue-50 px-2 py-0.5 rounded border border-blue-200">
-                                                                                        • Exp. Discharge: {new Date(task.expectedDischargeDate).toLocaleDateString()}
-                                                                                    </span>
-                                                                                )}
                                                                                 {task.updatedByName && (
                                                                                     <span className="text-amber-800 font-bold bg-amber-50 px-2 py-0.5 rounded border border-amber-200">
                                                                                         • Modified by Dr. <strong>{task.updatedByName.replace(/^Dr\.\s*/i, '')}</strong> at {new Date(task.updatedAt).toLocaleString()}
@@ -3281,7 +3276,7 @@ const PatientDetails = () => {
                                                                         </div>
 
                                                                         <div className="flex items-center gap-2 self-start md:self-center">
-                                                                            {canEdit && (
+                                                                            {canEdit && !isCompleted && (
                                                                                 <button
                                                                                     type="button"
                                                                                     onClick={() => {
