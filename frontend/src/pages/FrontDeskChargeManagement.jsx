@@ -22,6 +22,7 @@ const FrontDeskChargeManagement = () => {
         standardFee: '',
         retainershipFee: '',
         familyRetainershipFee: '',
+        joudAlkhairFee: '',
         nhiaFee: '',
         kschmaFee: '',
         department: '',
@@ -69,6 +70,7 @@ const FrontDeskChargeManagement = () => {
                 standardFee: parseFloat(formData.standardFee) || 0,
                 retainershipFee: parseFloat(formData.retainershipFee) || 0,
                 familyRetainershipFee: parseFloat(formData.familyRetainershipFee) || 0,
+                joudAlkhairFee: parseFloat(formData.joudAlkhairFee) || 0,
                 nhiaFee: parseFloat(formData.nhiaFee) || 0,
                 kschmaFee: parseFloat(formData.kschmaFee) || 0,
                 department: formData.department || 'General',
@@ -105,6 +107,7 @@ const FrontDeskChargeManagement = () => {
             standardFee: (charge.standardFee || charge.basePrice || 0).toString(),
             retainershipFee: (charge.retainershipFee || 0).toString(),
             familyRetainershipFee: (charge.familyRetainershipFee || 0).toString(),
+            joudAlkhairFee: (charge.joudAlkhairFee || 0).toString(),
             nhiaFee: (charge.nhiaFee || 0).toString(),
             kschmaFee: (charge.kschmaFee || 0).toString(),
             department: charge.department || '',
@@ -395,6 +398,21 @@ const FrontDeskChargeManagement = () => {
                             </div>
                             <div>
                                 <label className="block text-gray-700 mb-2 font-semibold">
+                                    Joud Alkhair Ret. Fee
+                                </label>
+                                <input
+                                    type="number"
+                                    name="joudAlkhairFee"
+                                    value={formData.joudAlkhairFee}
+                                    onChange={handleInputChange}
+                                    className="w-full border p-2 rounded"
+                                    placeholder="0.00"
+                                    step="0.01"
+                                    min="0"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-gray-700 mb-2 font-semibold">
                                     NHIA Fee
                                 </label>
                                 <input
@@ -556,8 +574,9 @@ const FrontDeskChargeManagement = () => {
                                                         <div className="text-sm">
                                                             <p><span className="font-semibold">Std:</span> ₦{(charge.standardFee || charge.basePrice || 0).toLocaleString()}</p>
                                                             <p className="text-xs text-gray-500">
-                                                                Corp Ret: ₦{(charge.retainershipFee || 0).toLocaleString()} |
-                                                                Fam Ret: ₦{(charge.familyRetainershipFee || 0).toLocaleString()}
+                                                                Corp Ret: ₦{(charge.retainershipFee || 0).toLocaleString()} | 
+                                                                Fam Ret: ₦{(charge.familyRetainershipFee || 0).toLocaleString()} | 
+                                                                Joud Ret: ₦{(charge.joudAlkhairFee || 0).toLocaleString()}
                                                             </p>
                                                             <p className="text-xs text-gray-500">
                                                                 NHIA: ₦{(charge.nhiaFee || 0).toLocaleString()} |

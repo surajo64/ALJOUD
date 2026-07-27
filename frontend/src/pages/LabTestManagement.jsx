@@ -21,6 +21,7 @@ const LabTestManagement = () => {
         standardFee: '',
         retainershipFee: '',
         familyRetainershipFee: '',
+        joudAlkhairFee: '',
         nhiaFee: '',
         kschmaFee: '',
         description: '',
@@ -69,6 +70,7 @@ const LabTestManagement = () => {
                 standardFee: parseFloat(formData.standardFee) || 0,
                 retainershipFee: parseFloat(formData.retainershipFee) || 0,
                 familyRetainershipFee: parseFloat(formData.familyRetainershipFee) || 0,
+                joudAlkhairFee: parseFloat(formData.joudAlkhairFee) || 0,
                 nhiaFee: parseFloat(formData.nhiaFee) || 0,
                 kschmaFee: parseFloat(formData.kschmaFee) || 0,
                 department: 'Laboratory',
@@ -106,6 +108,7 @@ const LabTestManagement = () => {
             standardFee: (test.standardFee || 0).toString(),
             retainershipFee: (test.retainershipFee || 0).toString(),
             familyRetainershipFee: (test.familyRetainershipFee || 0).toString(),
+            joudAlkhairFee: (test.joudAlkhairFee || 0).toString(),
             nhiaFee: (test.nhiaFee || 0).toString(),
             kschmaFee: (test.kschmaFee || 0).toString(),
             description: test.description || '',
@@ -545,6 +548,19 @@ RESULT:
                                     />
                                 </div>
                                 <div>
+                                    <label className="block text-xs font-semibold mb-1 text-teal-600">Joud Alkhair Ret.</label>
+                                    <input
+                                        type="number"
+                                        name="joudAlkhairFee"
+                                        value={formData.joudAlkhairFee}
+                                        onChange={handleInputChange}
+                                        className="w-full border p-2 rounded text-sm border-teal-200 focus:border-teal-500"
+                                        placeholder="0.00"
+                                        step="0.01"
+                                        min="0"
+                                    />
+                                </div>
+                                <div>
                                     <label className="block text-xs font-semibold mb-1 text-green-600">NHIA Fee</label>
                                     <input
                                         type="number"
@@ -722,7 +738,7 @@ _____________________________________"
                                                     <span className="text-gray-500">Standard:</span>
                                                     <span className="font-semibold text-gray-800">₦{(test.standardFee || 0).toLocaleString()}</span>
                                                 </div>
-                                                {(test.standardFee > 0 || test.retainershipFee > 0 || test.familyRetainershipFee > 0 || test.nhiaFee > 0 || test.kschmaFee > 0) && (
+                                                {(test.standardFee > 0 || test.retainershipFee > 0 || test.familyRetainershipFee > 0 || test.joudAlkhairFee > 0 || test.nhiaFee > 0 || test.kschmaFee > 0) && (
                                                     <div className="grid grid-cols-2 gap-x-3 gap-y-1 text-xs">
                                                         {test.standardFee > 0 && (
                                                             <div className="flex justify-between gap-1">

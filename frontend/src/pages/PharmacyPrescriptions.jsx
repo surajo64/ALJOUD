@@ -565,13 +565,14 @@ const PharmacyPrescriptions = () => {
         if (!fees) return 0;
 
         let fee = 0;
-        if (provider === 'Retainership' || provider === 'Corporate Retainership') fee = fees.retainershipFee || 0;
+        if (provider === 'Joud Alkhair Retainership') fee = fees.joudAlkhairFee || fees.retainershipFee || 0;
+        else if (provider === 'Retainership' || provider === 'Corporate Retainership') fee = fees.retainershipFee || 0;
         else if (provider === 'Family Retainership') fee = fees.familyRetainershipFee || 0;
         else if (provider === 'NHIA') fee = fees.nhiaFee || 0;
         else if (provider === 'KSCHMA') fee = fees.kschmaFee || 0;
         else fee = fees.standardFee || fees.price || 0;
 
-        if (fee === 0 && (provider === 'NHIA' || provider === 'KSCHMA' || provider === 'Retainership' || provider === 'Corporate Retainership' || provider === 'Family Retainership')) {
+        if (fee === 0 && (provider === 'NHIA' || provider === 'KSCHMA' || provider === 'Retainership' || provider === 'Corporate Retainership' || provider === 'Family Retainership' || provider === 'Joud Alkhair Retainership')) {
             fee = fees.standardFee || fees.price || 0;
         }
         return fee;
@@ -581,7 +582,7 @@ const PharmacyPrescriptions = () => {
         let patientPortion = totalAmount;
         let hmoPortion = 0;
 
-        if (provider === 'Retainership' || provider === 'Corporate Retainership' || provider === 'Family Retainership') {
+        if (provider === 'Retainership' || provider === 'Corporate Retainership' || provider === 'Family Retainership' || provider === 'Joud Alkhair Retainership') {
             patientPortion = 0;
             hmoPortion = totalAmount;
         } else if (provider === 'NHIA' || provider === 'KSCHMA') {

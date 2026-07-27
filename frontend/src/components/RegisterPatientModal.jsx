@@ -206,13 +206,13 @@ const RegisterPatientModal = ({ isOpen, onClose, onSuccess, userToken }) => {
         e.preventDefault();
 
         // Validate HMO field for Retainership, NHIA and KSCHMA
-        if ((['Retainership', 'Corporate Retainership', 'Family Retainership', 'NHIA', 'KSCHMA'].includes(formData.provider)) && !formData.hmo) {
+        if ((['Retainership', 'Corporate Retainership', 'Family Retainership', 'Joud Alkhair Retainership', 'NHIA', 'KSCHMA'].includes(formData.provider)) && !formData.hmo) {
             toast.error('HMO is required for Retainership, NHIA and KSCHMA providers');
             return;
         }
 
         // Validate that the selected Retainership HMO has made an initial deposit
-        if ((formData.provider === 'Retainership' || formData.provider === 'Corporate Retainership' || formData.provider === 'Family Retainership') && formData.hmo) {
+        if ((formData.provider === 'Retainership' || formData.provider === 'Corporate Retainership' || formData.provider === 'Family Retainership' || formData.provider === 'Joud Alkhair Retainership') && formData.hmo) {
             const depositInfo = retainershipDepositStatus.find(s => s.name === formData.hmo);
             if (depositInfo && !depositInfo.hasDeposit) {
                 toast.error(`"${formData.hmo}" has not made an initial deposit. Please record a deposit first before assigning patients.`);
@@ -545,13 +545,14 @@ const RegisterPatientModal = ({ isOpen, onClose, onSuccess, userToken }) => {
                                             <option value="Standard">Standard</option>
                                             <option value="Corporate Retainership">Corporate Retainership</option>
                                             <option value="Family Retainership">Family Retainership</option>
+                                            <option value="Joud Alkhair Retainership">Joud Alkhair Retainership</option>
                                             <option value="NHIA">NHIA</option>
                                             <option value="KSCHMA">KSCHMA</option>
                                         </select>
                                     </div>
 
                                     {/* HMO - Shown for Retainership, NHIA and KSCHMA */}
-                                    {(['Retainership', 'Corporate Retainership', 'Family Retainership', 'NHIA', 'KSCHMA'].includes(formData.provider)) && (
+                                    {(['Retainership', 'Corporate Retainership', 'Family Retainership', 'Joud Alkhair Retainership', 'NHIA', 'KSCHMA'].includes(formData.provider)) && (
                                         <div>
                                             <label className="block text-sm font-semibold mb-1">
                                                 HMO <span className="text-red-500">*</span>
@@ -561,7 +562,7 @@ const RegisterPatientModal = ({ isOpen, onClose, onSuccess, userToken }) => {
                                                 value={formData.hmo}
                                                 onChange={handleChange}
                                                 className="w-full border p-2 rounded"
-                                                required={['Retainership', 'Corporate Retainership', 'Family Retainership', 'NHIA', 'KSCHMA'].includes(formData.provider)}
+                                                required={['Retainership', 'Corporate Retainership', 'Family Retainership', 'Joud Alkhair Retainership', 'NHIA', 'KSCHMA'].includes(formData.provider)}
                                             >
                                                 <option value="">Select HMO *</option>
                                                 {hmos
@@ -578,6 +579,10 @@ const RegisterPatientModal = ({ isOpen, onClose, onSuccess, userToken }) => {
                                                             // Show only HMOs with retainershipType === 'Family'
                                                             return hmo.category === 'Retainership' && hmo.retainershipType === 'Family';
                                                         }
+                                                        if (formData.provider === 'Joud Alkhair Retainership') {
+                                                            // Show only HMOs with retainershipType === 'Joud Alkhair'
+                                                            return hmo.category === 'Retainership' && hmo.retainershipType === 'Joud Alkhair';
+                                                        }
                                                         if (formData.provider === 'Retainership') {
                                                             // Legacy: show all retainership HMOs
                                                             return hmo.category === 'Retainership';
@@ -590,7 +595,7 @@ const RegisterPatientModal = ({ isOpen, onClose, onSuccess, userToken }) => {
                                                     })
                                                     .map(hmo => {
                                                         // For Retainership, check if deposit has been made
-                                                        const depositInfo = (formData.provider === 'Retainership' || formData.provider === 'Corporate Retainership' || formData.provider === 'Family Retainership')
+                                                        const depositInfo = (formData.provider === 'Retainership' || formData.provider === 'Corporate Retainership' || formData.provider === 'Family Retainership' || formData.provider === 'Joud Alkhair Retainership')
                                                             ? retainershipDepositStatus.find(s => s.name === hmo.name)
                                                             : null;
                                                         const noDeposit = depositInfo && !depositInfo.hasDeposit;

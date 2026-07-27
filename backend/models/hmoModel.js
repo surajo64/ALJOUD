@@ -20,7 +20,7 @@ const hmoSchema = mongoose.Schema({
     // Retainership-specific fields
     retainershipType: {
         type: String,
-        enum: ['Family', 'Corporate', ''],
+        enum: ['Family', 'Corporate', 'Joud Alkhair', ''],
         default: ''
     },
     registrationChargeRef: {

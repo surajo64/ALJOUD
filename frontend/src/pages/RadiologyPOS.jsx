@@ -107,7 +107,8 @@ const RadiologyPOS = () => {
         if (!patient) return charge.standardFee || charge.basePrice || 0;
         const provider = patient.provider;
         let fee = 0;
-        if (provider === 'Retainership' || provider === 'Corporate Retainership') fee = charge.retainershipFee || 0;
+        if (provider === 'Joud Alkhair Retainership') fee = charge.joudAlkhairFee || charge.retainershipFee || 0;
+        else if (provider === 'Retainership' || provider === 'Corporate Retainership') fee = charge.retainershipFee || 0;
         else if (provider === 'Family Retainership') fee = charge.familyRetainershipFee || 0;
         else if (provider === 'NHIA') fee = charge.nhiaFee || 0;
         else if (provider === 'KSCHMA') fee = charge.kschmaFee || 0;
@@ -189,7 +190,7 @@ const RadiologyPOS = () => {
         if (isManualPaymentMethod) return;
 
         if (selectedPatient) {
-            const isRetainershipPatient = ['Retainership', 'Corporate Retainership', 'Family Retainership'].includes(selectedPatient.provider);
+            const isRetainershipPatient = ['Retainership', 'Corporate Retainership', 'Family Retainership', 'Joud Alkhair Retainership'].includes(selectedPatient.provider);
             const hasSufficientBalance = selectedPatient.depositBalance >= total;
 
             if (isRetainershipPatient && hasSufficientBalance) {
@@ -474,7 +475,7 @@ const RadiologyPOS = () => {
                                             <div>
                                                 <span className="font-medium text-gray-500 text-[11px] block">Provider</span>
                                                 <span className={`font-bold uppercase tracking-wider text-[9px] px-1.5 py-0.5 rounded-full inline-block mt-0.5 ${
-                                                    ['Retainership', 'Corporate Retainership', 'Family Retainership'].includes(selectedPatient.provider)
+                                                    ['Retainership', 'Corporate Retainership', 'Family Retainership', 'Joud Alkhair Retainership'].includes(selectedPatient.provider)
                                                         ? 'bg-purple-100 text-purple-800'
                                                         : ['NHIA', 'KSCHMA'].includes(selectedPatient.provider)
                                                         ? 'bg-blue-100 text-blue-800'
@@ -493,7 +494,7 @@ const RadiologyPOS = () => {
 
                                         {/* System Detection Banner */}
                                         <div className="mt-3 pt-2.5 border-t border-blue-200 text-xs font-semibold text-gray-700">
-                                            {['Retainership', 'Corporate Retainership', 'Family Retainership'].includes(selectedPatient.provider) ? (
+                                            {['Retainership', 'Corporate Retainership', 'Family Retainership', 'Joud Alkhair Retainership'].includes(selectedPatient.provider) ? (
                                                 selectedPatient.depositBalance >= total ? (
                                                     <div className="flex items-center gap-1.5 text-purple-700 bg-purple-100/50 p-2 rounded">
                                                         <span className="inline-block w-2.5 h-2.5 bg-purple-500 rounded-full animate-pulse" />
@@ -659,7 +660,7 @@ const RadiologyPOS = () => {
                                 {selectedPatient && (
                                     <>
                                         <option value="deposit">Patient Deposit (Wallet: ₦{(selectedPatient.depositBalance || 0).toLocaleString()})</option>
-                                        {['Retainership', 'Corporate Retainership', 'Family Retainership'].includes(selectedPatient.provider) && (
+                                        {['Retainership', 'Corporate Retainership', 'Family Retainership', 'Joud Alkhair Retainership'].includes(selectedPatient.provider) && (
                                             <option value="retainership">Retainership Account (Company Deposit)</option>
                                         )}
                                     </>

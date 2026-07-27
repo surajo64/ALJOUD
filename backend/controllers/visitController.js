@@ -119,7 +119,7 @@ const createVisit = async (req, res) => {
             return res.status(404).json({ message: 'Patient not found' });
         }
 
-        const isRetainership = ['Retainership', 'Corporate Retainership', 'Family Retainership'].includes(patient.provider);
+        const isRetainership = ['Retainership', 'Corporate Retainership', 'Family Retainership', 'Joud Alkhair Retainership'].includes(patient.provider);
         let hasValidDeposit = (patient.depositBalance || 0) > 0;
 
         if (isRetainership) {
@@ -626,7 +626,7 @@ const convertToInpatient = async (req, res) => {
             return res.status(404).json({ message: 'Patient not found' });
         }
 
-        const isRetainership = ['Retainership', 'Corporate Retainership', 'Family Retainership'].includes(patient.provider);
+        const isRetainership = ['Retainership', 'Corporate Retainership', 'Family Retainership', 'Joud Alkhair Retainership'].includes(patient.provider);
         let hasValidDeposit = (patient.depositBalance || 0) > 0;
 
         if (isRetainership) {
@@ -755,7 +755,7 @@ const changeEncounterType = async (req, res) => {
                 return res.status(404).json({ message: 'Patient not found' });
             }
 
-            const isRetainership = ['Retainership', 'Corporate Retainership', 'Family Retainership'].includes(patient.provider);
+            const isRetainership = ['Retainership', 'Corporate Retainership', 'Family Retainership', 'Joud Alkhair Retainership'].includes(patient.provider);
             let hasValidDeposit = (patient.depositBalance || 0) > 0;
 
             if (isRetainership) {
@@ -814,7 +814,7 @@ const changeEncounterType = async (req, res) => {
                 const EncounterCharge = require('../models/encounterChargeModel');
                 let patientPortion = dailyFee;
                 let hmoPortion = 0;
-                if (patient && ['Retainership', 'Corporate Retainership', 'Family Retainership', 'NHIA', 'KSCHMA'].includes(patient.provider)) {
+                if (patient && ['Retainership', 'Corporate Retainership', 'Family Retainership', 'Joud Alkhair Retainership', 'NHIA', 'KSCHMA'].includes(patient.provider)) {
                     patientPortion = 0;
                     hmoPortion = dailyFee;
                 }
@@ -874,6 +874,7 @@ const changeEncounterType = async (req, res) => {
                         switch (patientObj.provider) {
                             case 'Retainership':
                             case 'Corporate Retainership':
+                            case 'Joud Alkhair Retainership':
                                 fee = ec.charge.retainershipFee;
                                 break;
                             case 'Family Retainership':
@@ -907,7 +908,7 @@ const changeEncounterType = async (req, res) => {
                         if (!isCovered) {
                             patientPortion = totalAmount;
                             hmoPortion = 0;
-                        } else if (patientObj.provider === 'Retainership' || patientObj.provider === 'Corporate Retainership' || patientObj.provider === 'Family Retainership') {
+                        } else if (patientObj.provider === 'Retainership' || patientObj.provider === 'Corporate Retainership' || patientObj.provider === 'Family Retainership' || patientObj.provider === 'Joud Alkhair Retainership') {
                             patientPortion = 0;
                             hmoPortion = totalAmount;
                         } else if (patientObj.provider === 'NHIA' || patientObj.provider === 'KSCHMA') {

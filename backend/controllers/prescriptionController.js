@@ -202,7 +202,9 @@ const generatePrescriptionCharge = async (req, res) => {
         } else {
             // Prioritize Inventory price for drugs if available
             if (inventoryItem) {
-                if (patient.provider === 'Retainership' || patient.provider === 'Corporate Retainership') {
+                if (patient.provider === 'Joud Alkhair Retainership') {
+                    fee = inventoryItem.joudAlkhairFee || inventoryItem.retainershipFee || 0;
+                } else if (patient.provider === 'Retainership' || patient.provider === 'Corporate Retainership') {
                     fee = inventoryItem.retainershipFee || 0;
                 } else if (patient.provider === 'Family Retainership') {
                     fee = inventoryItem.familyRetainershipFee || 0;
@@ -217,7 +219,9 @@ const generatePrescriptionCharge = async (req, res) => {
 
             // Fallback to drugCharge if fee is still 0
             if (fee === 0 && drugCharge) {
-                if (patient.provider === 'Retainership' || patient.provider === 'Corporate Retainership') {
+                if (patient.provider === 'Joud Alkhair Retainership') {
+                    fee = drugCharge.joudAlkhairFee || drugCharge.retainershipFee || 0;
+                } else if (patient.provider === 'Retainership' || patient.provider === 'Corporate Retainership') {
                     fee = drugCharge.retainershipFee || 0;
                 } else if (patient.provider === 'Family Retainership') {
                     fee = drugCharge.familyRetainershipFee || 0;
@@ -242,7 +246,7 @@ const generatePrescriptionCharge = async (req, res) => {
         let patientPortion = totalAmount;
         let hmoPortion = 0;
 
-        if (patient.provider === 'Retainership' || patient.provider === 'Corporate Retainership' || patient.provider === 'Family Retainership') {
+        if (patient.provider === 'Retainership' || patient.provider === 'Corporate Retainership' || patient.provider === 'Family Retainership' || patient.provider === 'Joud Alkhair Retainership') {
             patientPortion = 0;
             hmoPortion = totalAmount;
         } else if (patient.provider === 'NHIA' || patient.provider === 'KSCHMA') {

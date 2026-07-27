@@ -293,6 +293,7 @@ const Inventory = () => {
             standardFee: "",
             retainershipFee: "",
             familyRetainershipFee: "",
+            joudAlkhairFee: "",
             nhiaFee: "",
             kschmaFee: "",
             purchasingPrice: "",
@@ -318,6 +319,7 @@ const Inventory = () => {
             standardFee: item.standardFee || item.price || "",
             retainershipFee: item.retainershipFee || "",
             familyRetainershipFee: item.familyRetainershipFee || "",
+            joudAlkhairFee: item.joudAlkhairFee || "",
             nhiaFee: item.nhiaFee || "",
             kschmaFee: item.kschmaFee || "",
             expiryDate: item.expiryDate ? item.expiryDate.substring(0, 10) : "",
@@ -334,6 +336,7 @@ const Inventory = () => {
             standardFee: item.standardFee || item.price || "",
             retainershipFee: item.retainershipFee || "",
             familyRetainershipFee: item.familyRetainershipFee || "",
+            joudAlkhairFee: item.joudAlkhairFee || "",
             nhiaFee: item.nhiaFee || "",
             kschmaFee: item.kschmaFee || "",
             purchasingPrice: item.purchasingPrice || "",
@@ -772,6 +775,12 @@ const Inventory = () => {
                                                         <span>₦{item.familyRetainershipFee.toLocaleString()}</span>
                                                     </div>
                                                 )}
+                                                {item.joudAlkhairFee > 0 && (
+                                                     <div className="flex justify-between gap-1">
+                                                         <span className="text-teal-600">Joud Ret:</span>
+                                                         <span>₦{item.joudAlkhairFee.toLocaleString()}</span>
+                                                     </div>
+                                                 )}
                                                 {item.nhiaFee > 0 && (
                                                     <div className="flex justify-between gap-1">
                                                         <span className="text-green-600">NHIA:</span>
@@ -912,6 +921,16 @@ const Inventory = () => {
                                             placeholder="0.00"
                                         />
                                     </div>
+                                    <div>
+                                         <label className="block text-xs font-semibold mb-1 text-teal-600">Joud Alkhair Ret.</label>
+                                         <input
+                                             type="number"
+                                             className="w-full border p-2 rounded text-sm border-teal-200 focus:border-teal-500"
+                                             value={currentItem.joudAlkhairFee}
+                                             onChange={(e) => setCurrentItem({ ...currentItem, joudAlkhairFee: e.target.value })}
+                                             placeholder="0.00"
+                                         />
+                                     </div>
                                     <div>
                                         <label className="block text-xs font-semibold mb-1 text-green-600">NHIA Fee</label>
                                         <input

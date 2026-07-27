@@ -494,6 +494,7 @@ const HMOManagement = () => {
                                     <option value="all">All Types</option>
                                     <option value="Family">Family</option>
                                     <option value="Corporate">Corporate</option>
+                                    <option value="Joud Alkhair">Joud Alkhair</option>
                                 </select>
                             </div>
                         )}
@@ -798,6 +799,7 @@ const HMOManagement = () => {
                                                 <option value="">-- Select Type --</option>
                                                 <option value="Family">Family</option>
                                                 <option value="Corporate">Corporate</option>
+                                                <option value="Joud Alkhair">Joud Alkhair</option>
                                             </select>
                                         </div>
                                         <div>
