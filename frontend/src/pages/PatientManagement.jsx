@@ -351,6 +351,10 @@ const PatientManagement = () => {
 
     const handleCreateEncounter = async () => {
         if (!encounterPatient) return;
+        if (encounterPatient.isWalkIn || encounterPatient.contact === 'Walk-in' || (encounterPatient.mrn && /^WI-|^LAB-|^RAD-/.test(encounterPatient.mrn))) {
+            toast.error('Cannot create a clinical encounter for a walk-in customer.');
+            return;
+        }
         if (!isANC && !waiveConsultationFee && !['External Investigation', 'External Pharmacy', 'External Lab/Radiology', 'Inpatient', 'ANC Visit'].includes(encounterType) && selectedCharges.length === 0) {
             toast.error('Please select at least one charge, or check ANC to skip charges');
             return;

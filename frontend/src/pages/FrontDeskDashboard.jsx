@@ -528,6 +528,11 @@ const FrontDeskDashboard = () => {
             return;
         }
 
+        if (selectedPatient && (selectedPatient.isWalkIn || selectedPatient.contact === 'Walk-in' || (selectedPatient.mrn && /^WI-|^LAB-|^RAD-/.test(selectedPatient.mrn)))) {
+            toast.error('Cannot create a clinical encounter for a walk-in customer.');
+            return;
+        }
+
         try {
             setLoading(true);
             const config = { headers: { Authorization: `Bearer ${user.token}` } };
