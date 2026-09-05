@@ -9,6 +9,7 @@ const User = require('../models/userModel');
 const VitalSign = require('../models/vitalSignModel');
 const Clinic = require('../models/clinicModel');
 const Ward = require('../models/wardModel');
+const Claim = require('../models/claimModel');
 
 // @desc    Get lab revenue report by date range
 // @route   GET /api/reports/lab-revenue?startDate=&endDate=
@@ -1857,6 +1858,12 @@ const getUserDashboardStats = async (req, res) => {
                 status: 'completed'
             });
             stats = { scansToday, totalScansSigned };
+        } else if (role === 'claims_officer' || role === 'claim_officer') {
+            const totalClaims = await Claim.countDocuments();
+            const pendingClaims = await Claim.countDocuments({ status: 'pending' });
+            const submittedClaims = await Claim.countDocuments({ status: 'submitted' });
+            const paidClaims = await Claim.countDocuments({ status: 'paid' });
+            stats = { totalClaims, pendingClaims, submittedClaims, paidClaims };
         }
 
         res.json(stats);

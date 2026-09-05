@@ -93,7 +93,7 @@ const UserManagement = () => {
         }
 
         if (roleFilter !== 'all') {
-            filtered = filtered.filter(u => u.role === roleFilter);
+            filtered = filtered.filter(u => u.role === roleFilter || ((roleFilter === 'claims_officer' || roleFilter === 'claim_officer') && (u.role === 'claims_officer' || u.role === 'claim_officer')));
         }
 
         setFilteredUsers(filtered);
@@ -272,6 +272,7 @@ const UserManagement = () => {
                             <option value="radiologist">Radiologists</option>
                             <option value="cashier">Cashiers</option>
                             <option value="receptionist">Receptionists</option>
+                            <option value="claims_officer">Claims Officers</option>
                         </select>
                     </div>
                     {user.role !== 'readonly_admin' && (
@@ -308,7 +309,8 @@ const UserManagement = () => {
                                                 u.role === 'doctor' ? 'bg-blue-100 text-blue-800' :
                                                     u.role === 'nurse' ? 'bg-green-100 text-green-800' :
                                                         u.role === 'pharmacist' ? 'bg-purple-100 text-purple-800' :
-                                                            'bg-gray-100 text-gray-800'
+                                                    (u.role === 'claims_officer' || u.role === 'claim_officer') ? 'bg-cyan-100 text-cyan-800' :
+                                                        'bg-gray-100 text-gray-800'
                                             }`}>
                                             {u.role.replace('_', ' ').toUpperCase()}
                                             {u.labSpecialization && ` (${u.labSpecialization})`}
@@ -480,6 +482,7 @@ const UserManagement = () => {
                                     <option value="radiologist">Radiologist</option>
                                     <option value="cashier">Cashier</option>
                                     <option value="receptionist">Receptionist</option>
+                                    <option value="claims_officer">Claims Officer</option>
                                 </select>
                             </div>
                             {(newUser.role === 'lab_technician' || newUser.role === 'lab_scientist') && (
@@ -610,6 +613,7 @@ const UserManagement = () => {
                                     <option value="radiologist">Radiologist</option>
                                     <option value="cashier">Cashier</option>
                                     <option value="receptionist">Receptionist</option>
+                                    <option value="claims_officer">Claims Officer</option>
                                 </select>
                             </div>
                             {(selectedUser.role === 'lab_technician' || selectedUser.role === 'lab_scientist') && (

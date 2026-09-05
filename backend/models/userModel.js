@@ -18,7 +18,7 @@ const userSchema = mongoose.Schema({
     role: {
         type: String,
         required: true,
-        enum: ['super_admin', 'admin', 'readonly_admin', 'doctor', 'nurse', 'pharmacist', 'lab_technician', 'lab_scientist', 'radiologist', 'receptionist', 'cashier'],
+        enum: ['super_admin', 'admin', 'readonly_admin', 'doctor', 'nurse', 'pharmacist', 'lab_technician', 'lab_scientist', 'radiologist', 'receptionist', 'cashier', 'claims_officer', 'claim_officer'],
     },
     assignedPharmacy: {
         type: mongoose.Schema.Types.ObjectId,
