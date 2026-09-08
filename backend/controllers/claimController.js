@@ -21,7 +21,7 @@ const generateClaimFromEncounter = async (req, res) => {
         const patient = await Patient.findById(encounter.patient._id).populate('hmo');
 
         // Only generate claims for Retainership, NHIA and KSCHMA patients
-        if (!['Retainership', 'Corporate Retainership', 'Family Retainership', 'Joud Alkhair Retainership', 'NHIA', 'KSCHMA'].includes(patient.provider)) {
+        if (!['Retainership', 'Corporate Retainership', 'Family Retainership', 'NHIA', 'KSCHMA'].includes(patient.provider)) {
             return res.status(400).json({ message: 'Claims can only be generated for Retainership, NHIA or KSCHMA patients' });
         }
 
@@ -68,7 +68,7 @@ const generateClaimFromEncounter = async (req, res) => {
                 patientPortion = ec.patientPortion;
             } else {
                 // Fallback calculation for old records
-                if (['Retainership', 'Corporate Retainership', 'Family Retainership', 'Joud Alkhair Retainership'].includes(patient.provider)) {
+                if (['Retainership', 'Corporate Retainership', 'Family Retainership'].includes(patient.provider)) {
                     // Retainership: HMO covers 100% of ALL charges (including drugs)
                     patientPortion = 0;
                     hmoPortion = totalAmount;
@@ -110,7 +110,7 @@ const generateClaimFromEncounter = async (req, res) => {
         });
 
         const populatedClaim = await Claim.findById(claim._id)
-            .populate('patient', 'firstName lastName patientId')
+            .populate('patient', 'name mrn insuranceNumber firstName lastName patientId')
             .populate('hmo', 'name code')
             .populate('encounter')
             .populate('claimItems.charge');
@@ -187,7 +187,7 @@ const getClaimById = async (req, res) => {
 const getClaimsByHMO = async (req, res) => {
     try {
         const claims = await Claim.find({ hmo: req.params.hmoId })
-            .populate('patient', 'firstName lastName patientId')
+            .populate('patient', 'name mrn insuranceNumber firstName lastName patientId')
             .populate('hmo', 'name code')
             .populate('encounter', 'encounterDate')
             .sort({ createdAt: -1 });
@@ -273,7 +273,7 @@ const exportClaimsToExcel = async (req, res) => {
         }
 
         const claims = await Claim.find(filter)
-            .populate('patient', 'firstName lastName patientId')
+            .populate('patient', 'name mrn insuranceNumber firstName lastName patientId')
             .populate('hmo', 'name code')
             .populate('encounter', 'encounterDate')
             .populate('claimItems.charge');
@@ -285,8 +285,9 @@ const exportClaimsToExcel = async (req, res) => {
             claim.claimItems.forEach(item => {
                 excelData.push({
                     'Claim Number': claim.claimNumber,
-                    'Patient ID': claim.patient.patientId,
-                    'Patient Name': `${claim.patient.firstName} ${claim.patient.lastName}`,
+                    'Patient ID': claim.patient?.mrn || claim.patient?.patientId || '',
+                    'Insurance No': claim.patient?.insuranceNumber || '',
+                    'Patient Name': claim.patient?.name || `${claim.patient?.firstName || ''} ${claim.patient?.lastName || ''}`.trim(),
                     'HMO': claim.hmo.name,
                     'HMO Code': claim.hmo.code,
                     'Encounter Date': new Date(claim.encounter.encounterDate).toLocaleDateString(),
