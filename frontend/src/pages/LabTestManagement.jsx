@@ -393,7 +393,7 @@ NORMAL RANGES:
 RESULT:
 - Malaria: _____ (Normal: Negative)
 `,
-        urineCulture: `URINE CULTURE
+        urineCulture: `CULTURE
 
 PHYSICAL EXAMINATION:
 - Color: _____ (Normal: Yellow to amber)
