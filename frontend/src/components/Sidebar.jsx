@@ -126,6 +126,9 @@ const Sidebar = () => {
                         <Link to="/front-desk/family-files" className={`flex items-center gap-3 p-3 rounded hover:bg-green-700 transition ${isActive('/front-desk/family-files')}`}>
                             <FaUserFriends /> Family Files
                         </Link>
+                        <Link to="/front-desk/investigation-results" className={`flex items-center gap-3 p-3 rounded hover:bg-green-700 transition ${isActive('/front-desk/investigation-results')}`}>
+                            <FaFileMedicalAlt /> Investigation Results
+                        </Link>
                         <Link to="/front-desk/speciality-clinics" className={`flex items-center gap-3 p-3 rounded hover:bg-green-700 transition ${isActive('/front-desk/speciality-clinics')}`}>
                             <FaHospital /> Speciality Clinics
                         </Link>
@@ -336,6 +339,9 @@ const Sidebar = () => {
                             </Link>
                             <Link to="/admin/clinical-reports" className={`flex items-center gap-3 p-2 rounded hover:bg-green-600 transition ${isActive('/admin/clinical-reports')}`}>
                                 <FaFileMedicalAlt size={14} /> Clinical Reports
+                            </Link>
+                            <Link to="/front-desk/investigation-results" className={`flex items-center gap-3 p-2 rounded hover:bg-green-600 transition ${isActive('/front-desk/investigation-results')}`}>
+                                <FaFileMedicalAlt size={14} /> Investigation Results
                             </Link>
                             <Link to="/admin/visit-report" className={`flex items-center gap-3 p-2 rounded hover:bg-green-600 transition ${isActive('/admin/visit-report')}`}>
                                 <FaHospitalUser size={14} /> Visit Reports
